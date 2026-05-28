@@ -1,0 +1,57 @@
+.spark-glyph {
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  border-radius: 999px;
+}
+
+.spark-sm {
+  width: 25px;
+  height: 25px;
+}
+
+.spark-md {
+  width: 44px;
+  height: 44px;
+}
+
+.spark-lg {
+  width: 86px;
+  height: 86px;
+}
+
+.spark-done {
+  color: oklch(0.34 0.11 132);
+  background: oklch(0.91 0.16 126);
+  box-shadow: 0 10px 24px oklch(0.6 0.18 126 / 0.16);
+}
+
+.spark-active {
+  color: oklch(0.34 0.11 132);
+  background: oklch(0.95 0.1 128);
+  box-shadow: inset 0 0 0 1px oklch(0.72 0.18 128 / 0.28);
+}
+
+.spark-missed {
+  color: oklch(0.48 0.015 220);
+  background: oklch(0.9 0.005 220);
+}
+
+.spark-upcoming {
+  color: oklch(0.55 0.018 214);
+  background: oklch(0.95 0.004 214);
+}
+
+.progress-line {
+  height: 6px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: oklch(0.91 0.006 214);
+}
+
+.progress-line span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--primary);
+}

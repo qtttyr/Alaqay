@@ -1,0 +1,75 @@
+.logo-orbit {
+  position: relative;
+  width: min(52vw, 390px);
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+}
+
+.logo-orbit::before,
+.logo-orbit::after,
+.spark-ring {
+  content: "";
+  position: absolute;
+  inset: 12%;
+  border: 1px solid oklch(0.648 0.2 131.684 / 0.22);
+  border-radius: 999px;
+}
+
+.logo-orbit::after {
+  inset: 25%;
+  border-color: oklch(0.72 0.12 128 / 0.28);
+}
+
+.logo-orbit > span {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  background: var(--primary);
+  box-shadow: 0 0 30px oklch(0.78 0.2 128 / 0.3);
+  animation: floatSpark 5s ease-in-out infinite;
+}
+
+.logo-orbit > span:nth-child(2) {
+  top: 18%;
+  right: 22%;
+}
+
+.logo-orbit > span:nth-child(3) {
+  left: 14%;
+  bottom: 28%;
+  width: 10px;
+  height: 10px;
+  animation-delay: -1.4s;
+}
+
+.logo-orbit > span:nth-child(4) {
+  right: 18%;
+  bottom: 20%;
+  background: var(--primary);
+  animation-delay: -2.8s;
+}
+
+.logo-mark {
+  z-index: 1;
+  width: 128px;
+  height: 128px;
+  display: grid;
+  place-items: center;
+  border-radius: 34px;
+  color: oklch(0.26 0.07 132);
+  background: linear-gradient(145deg, oklch(0.92 0.18 126), oklch(0.78 0.2 128));
+  box-shadow: 0 30px 90px oklch(0.55 0.15 132 / 0.2);
+}
+
+@keyframes floatSpark {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+
+  50% {
+    transform: translateY(-12px) scale(1.08);
+  }
+}

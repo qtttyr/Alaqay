@@ -1,0 +1,160 @@
+.age-picker {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.6rem;
+}
+
+.age-picker button {
+  min-height: 116px;
+  display: grid;
+  justify-items: start;
+  gap: 0.22rem;
+  padding: 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: oklch(1 0 0 / 0.8);
+  color: var(--foreground);
+  text-align: left;
+  box-shadow: 0 10px 26px oklch(0.2 0.02 220 / 0.04);
+  transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
+}
+
+.age-picker button:active {
+  transform: scale(0.98);
+}
+
+.age-picker button.selected {
+  border-color: oklch(0.66 0.2 128);
+  background: oklch(0.92 0.15 126);
+}
+
+.age-picker strong {
+  margin-top: 0.2rem;
+  font-size: 1.35rem;
+  line-height: 1;
+}
+
+.age-picker span,
+.time-slot strong,
+.permission-grid strong {
+  font-size: 0.88rem;
+  font-weight: 850;
+}
+
+.age-picker small,
+.time-slot small,
+.permission-grid span {
+  color: var(--muted-foreground);
+  font-size: 0.72rem;
+  line-height: 1.3;
+}
+
+.routine-picker {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.time-slot {
+  display: grid;
+  gap: 0.8rem;
+  padding: 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  background: oklch(1 0 0 / 0.82);
+  box-shadow: 0 12px 28px oklch(0.2 0.02 220 / 0.045);
+}
+
+.time-slot-header {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.time-slot-header > div {
+  display: grid;
+  gap: 0.1rem;
+}
+
+.time-icon {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  background: oklch(0.94 0.11 128);
+  color: oklch(0.34 0.09 132);
+}
+
+.time-input {
+  height: 46px;
+  border-radius: 15px;
+  background: oklch(0.985 0.003 197);
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.time-presets {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.45rem;
+}
+
+.time-presets button {
+  height: 34px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: oklch(1 0 0 / 0.72);
+  color: var(--muted-foreground);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.time-presets button.active {
+  border-color: transparent;
+  background: oklch(0.92 0.15 126);
+  color: oklch(0.28 0.08 132);
+}
+
+.demo-strip {
+  display: grid;
+  gap: 0.8rem;
+  padding: 0.95rem;
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  background: oklch(1 0 0 / 0.82);
+}
+
+.demo-strip > div {
+  display: grid;
+  gap: 0.45rem;
+  color: oklch(0.36 0.03 220);
+  font-size: 0.85rem;
+  font-weight: 800;
+}
+
+.permission-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.7rem;
+}
+
+.permission-grid div {
+  min-height: 116px;
+  display: grid;
+  align-content: start;
+  gap: 0.45rem;
+  padding: 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: oklch(1 0 0 / 0.82);
+  color: oklch(0.32 0.05 132);
+  box-shadow: 0 10px 26px oklch(0.2 0.02 220 / 0.04);
+}
+
+@media (max-width: 390px) {
+  .age-picker,
+  .permission-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}

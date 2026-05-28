@@ -1,0 +1,269 @@
+.brush-screen {
+  justify-content: start;
+}
+
+.brush-route-frame .brush-screen {
+  padding-bottom: 1.25rem;
+}
+
+.brush-ready-hero,
+.brush-reminder-hero,
+.brush-session-hero,
+.brush-done-hero {
+  display: grid;
+  justify-items: center;
+  gap: 0.75rem;
+  padding: 1.4rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 28px;
+  background: oklch(1 0 0 / 0.82);
+  text-align: center;
+  box-shadow: 0 14px 34px oklch(0.2 0.02 220 / 0.05);
+}
+
+.brush-ready-hero h1,
+.brush-reminder-hero h1,
+.brush-done-hero h1 {
+  margin: 0;
+  color: oklch(0.17 0.018 224);
+  font-size: 2.2rem;
+  font-weight: 930;
+  line-height: 1;
+}
+
+.brush-ready-hero p:last-child,
+.brush-reminder-hero p:last-child,
+.brush-done-hero p:last-child,
+.brush-session-hero p {
+  max-width: 310px;
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: 0.92rem;
+  font-weight: 650;
+  line-height: 1.5;
+}
+
+.brush-reminder-hero {
+  min-height: 330px;
+  align-content: center;
+  padding: 1.6rem 1.1rem;
+  background:
+    radial-gradient(circle at 50% 16%, oklch(0.93 0.18 128 / 0.72), transparent 34%),
+    oklch(1 0 0 / 0.88);
+}
+
+.brush-reminder-spark {
+  display: grid;
+  place-items: center;
+  width: 104px;
+  height: 104px;
+  border-radius: 999px;
+  background: oklch(0.94 0.15 128 / 0.72);
+  box-shadow: inset 0 0 0 1px oklch(0.7 0.18 128 / 0.28);
+}
+
+.brush-reminder-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.brush-reminder-action {
+  min-height: 150px;
+  display: grid;
+  align-content: center;
+  justify-items: start;
+  gap: 0.5rem;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  background: oklch(1 0 0 / 0.84);
+  color: var(--foreground);
+  text-align: left;
+  box-shadow: 0 12px 28px oklch(0.2 0.02 220 / 0.04);
+  transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
+}
+
+.brush-reminder-action:active {
+  transform: scale(0.985);
+}
+
+.brush-reminder-action:disabled {
+  cursor: wait;
+  opacity: 0.68;
+}
+
+.brush-reminder-action.primary {
+  border-color: oklch(0.66 0.2 128 / 0.46);
+  background: oklch(0.91 0.16 128);
+}
+
+.brush-reminder-action span {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 999px;
+  background: oklch(0.98 0.03 128 / 0.8);
+}
+
+.brush-reminder-action strong {
+  font-size: 1rem;
+  font-weight: 930;
+  line-height: 1.05;
+}
+
+.brush-reminder-action small {
+  color: oklch(0.34 0.04 220 / 0.72);
+  font-size: 0.78rem;
+  font-weight: 760;
+  line-height: 1.3;
+}
+
+.brush-choice-grid {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.brush-choice {
+  min-height: 116px;
+  display: grid;
+  justify-items: start;
+  gap: 0.35rem;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  background: oklch(1 0 0 / 0.82);
+  color: var(--foreground);
+  text-align: left;
+  box-shadow: 0 12px 28px oklch(0.2 0.02 220 / 0.04);
+}
+
+.brush-choice.primary {
+  border-color: oklch(0.66 0.2 128 / 0.45);
+  background: oklch(0.92 0.15 126);
+}
+
+.brush-choice strong {
+  font-size: 1.05rem;
+  font-weight: 900;
+}
+
+.brush-choice span {
+  color: oklch(0.36 0.04 220 / 0.72);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.brush-session-hero {
+  padding-block: 1.1rem;
+}
+
+.brush-ring {
+  width: 222px;
+  height: 222px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: conic-gradient(var(--primary) var(--brush-progress), oklch(0.91 0.006 214) 0);
+}
+
+.brush-ring > div {
+  width: 178px;
+  height: 178px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 0.35rem;
+  border-radius: inherit;
+  background: oklch(0.995 0.002 197);
+}
+
+.brush-ring strong {
+  color: oklch(0.17 0.018 224);
+  font-size: 3.1rem;
+  font-weight: 950;
+  line-height: 0.9;
+}
+
+.brush-ring span {
+  color: var(--muted-foreground);
+  font-size: 0.86rem;
+  font-weight: 850;
+}
+
+.brush-zone-list {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.brush-zone-list > div {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 0.55rem 0.75rem;
+  padding: 0.85rem;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: oklch(1 0 0 / 0.78);
+}
+
+.brush-zone-list > div.active {
+  border-color: oklch(0.66 0.2 128 / 0.42);
+  background: oklch(0.96 0.06 128);
+}
+
+.brush-zone-list span,
+.brush-zone-list strong {
+  font-size: 0.86rem;
+  font-weight: 850;
+}
+
+.brush-zone-list .progress-line {
+  grid-column: 1 / -1;
+}
+
+.brush-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.brush-done-hero {
+  min-height: 360px;
+  align-content: center;
+}
+
+.brush-done-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.brush-error {
+  margin: 0;
+  padding: 0.8rem 0.9rem;
+  border: 1px solid oklch(0.72 0.18 28 / 0.26);
+  border-radius: 18px;
+  background: oklch(0.97 0.04 42 / 0.74);
+  color: oklch(0.38 0.11 31);
+  font-size: 0.82rem;
+  font-weight: 780;
+  text-align: center;
+}
+
+@media (max-width: 380px) {
+  .brush-reminder-actions,
+  .brush-actions,
+  .brush-done-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .brush-reminder-hero {
+    min-height: 300px;
+  }
+
+  .brush-reminder-action {
+    min-height: 120px;
+  }
+}

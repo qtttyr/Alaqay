@@ -1,0 +1,155 @@
+.hero-panel,
+.leader-card,
+.lesson-feature {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-height: 154px;
+  padding: 1.15rem;
+  border-radius: 24px;
+  color: oklch(0.23 0.06 132);
+  background: oklch(0.92 0.16 126);
+  box-shadow: 0 18px 42px oklch(0.55 0.15 132 / 0.13);
+}
+
+.hero-copy p,
+.hero-metric,
+.hero-copy small {
+  margin: 0;
+}
+
+.hero-copy {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.hero-copy p {
+  font-size: 0.76rem;
+  font-weight: 850;
+  color: oklch(0.3 0.075 132);
+}
+
+.hero-metric {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: end;
+  column-gap: 0.7rem;
+  max-width: 220px;
+}
+
+.hero-metric strong {
+  font-size: 3.8rem;
+  line-height: 0.86;
+  font-weight: 950;
+  letter-spacing: 0;
+}
+
+.hero-metric span {
+  padding-bottom: 0.18rem;
+  color: oklch(0.24 0.065 132);
+  font-size: 1rem;
+  font-weight: 850;
+  line-height: 1.05;
+}
+
+.hero-copy small {
+  display: block;
+  color: oklch(0.32 0.06 132 / 0.75);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.hero-spark {
+  width: 92px;
+  height: 92px;
+  display: grid;
+  place-items: center;
+  border-radius: 28px;
+  background: oklch(1 0 0 / 0.22);
+  box-shadow: inset 0 0 0 1px oklch(1 0 0 / 0.34);
+}
+
+.spark-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.7rem;
+}
+
+.spark-card {
+  border-radius: 18px;
+  background: oklch(1 0 0 / 0.82);
+}
+
+.spark-card [data-slot="card-header"],
+.spark-card [data-slot="card-content"] {
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+.spark-card-title {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.spark-card p {
+  display: none;
+}
+
+.status-missed {
+  opacity: 0.74;
+}
+
+.brush-cta {
+  min-height: 52px;
+  border-radius: 18px;
+}
+
+.week-panel {
+  display: grid;
+  gap: 0.7rem;
+  padding: 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: oklch(1 0 0 / 0.7);
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.section-title h2 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.section-title span {
+  color: var(--muted-foreground);
+  font-size: 0.8rem;
+}
+
+.week-row {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 0.35rem;
+}
+
+.week-day {
+  display: grid;
+  justify-items: center;
+  gap: 0.28rem;
+  padding: 0.48rem 0.12rem;
+  border-radius: 14px;
+  background: oklch(0.97 0.006 210);
+  color: var(--muted-foreground);
+  font-size: 0.7rem;
+}
+
+@media (max-width: 390px) {
+  .spark-grid {
+    grid-template-columns: 1fr;
+  }
+}

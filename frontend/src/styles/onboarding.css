@@ -1,0 +1,137 @@
+.onboarding-screen {
+  max-width: 520px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto auto;
+  padding: 0.9rem 1rem 1rem;
+}
+
+.phone-topbar {
+  display: grid;
+  grid-template-columns: auto minmax(120px, 180px);
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.35rem 0.25rem 0.8rem;
+  color: var(--muted-foreground);
+  font-size: 0.85rem;
+  font-weight: 750;
+}
+
+.step-progress {
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: oklch(0.91 0.006 214);
+}
+
+.step-progress span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--primary);
+  transition: width 220ms ease;
+}
+
+.onboarding-stage {
+  min-height: 340px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+.spark-showcase {
+  position: relative;
+  width: 150px;
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  margin-bottom: 1.1rem;
+}
+
+.onboarding-copy {
+  max-width: 430px;
+  padding: 0 0.35rem;
+  animation: onboardingFade 220ms ease both;
+}
+
+.ring-one {
+  inset: 16%;
+}
+
+.ring-two {
+  inset: 30%;
+  border-color: oklch(0.72 0.16 128 / 0.2);
+}
+
+.onboarding-stage h1 {
+  max-width: 410px;
+  font-size: clamp(2.05rem, 8.5vw, 3.35rem);
+  font-weight: 930;
+  line-height: 1.02;
+}
+
+.onboarding-stage p:last-child {
+  margin-top: 0.75rem;
+  font-size: 0.98rem;
+  line-height: 1.55;
+}
+
+.setup-panel {
+  min-height: 238px;
+  display: grid;
+  align-items: center;
+  margin-bottom: 1rem;
+  animation: onboardingRise 220ms ease both;
+}
+
+.onboarding-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: 0.5rem;
+}
+
+.dots {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.dots span {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 999px;
+  background: var(--border);
+  transition: 180ms ease;
+}
+
+.dots span.active {
+  width: 1.5rem;
+  background: var(--primary);
+}
+
+@keyframes onboardingFade {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes onboardingRise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

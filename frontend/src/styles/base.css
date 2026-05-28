@@ -1,0 +1,64 @@
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  html {
+    @apply font-sans;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  overflow-x: hidden;
+  font-weight: 500;
+  background:
+    radial-gradient(circle at 18% 4%, oklch(0.94 0.09 128 / 0.34), transparent 30rem),
+    linear-gradient(145deg, oklch(0.997 0.002 197), oklch(0.967 0.005 210));
+}
+
+button,
+input {
+  font: inherit;
+}
+
+.auth-screen,
+.onboarding-screen,
+.app-shell {
+  min-height: 100vh;
+  width: 100%;
+}
+
+.eyebrow {
+  margin: 0 0 0.5rem;
+  color: oklch(0.39 0.1 132);
+  font-size: 0.72rem;
+  font-weight: 850;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+h1,
+h2,
+h3,
+[data-slot="card-title"] {
+  font-weight: 850;
+}
+
+.wide-button {
+  width: 100%;
+}
+
+.primary-glow {
+  box-shadow: 0 14px 34px oklch(0.64 0.2 132 / 0.18);
+}
+
+.field {
+  display: grid;
+  gap: 0.45rem;
+}
