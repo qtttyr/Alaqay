@@ -8,7 +8,7 @@
 }
 
 .auth-hero {
-  min-height: min(540px, calc(100vh - 4rem));
+  min-height: min(540px, calc(100dvh - 4rem));
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -122,7 +122,7 @@
 }
 
 .auth-loading-screen {
-  min-height: 100vh;
+  min-height: 100dvh;
   display: grid;
   place-items: center;
   color: var(--muted-foreground);

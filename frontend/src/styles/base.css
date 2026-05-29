@@ -14,8 +14,12 @@
 
 body {
   min-width: 320px;
-  min-height: 100vh;
+  min-height: 100dvh;
   overflow-x: hidden;
+  overflow-y: hidden;
+  overscroll-behavior: none;
+  -webkit-text-size-adjust: 100%;
+  touch-action: manipulation;
   font-weight: 500;
   background:
     radial-gradient(circle at 18% 4%, oklch(0.94 0.09 128 / 0.34), transparent 30rem),
@@ -30,8 +34,9 @@ input {
 .auth-screen,
 .onboarding-screen,
 .app-shell {
-  min-height: 100vh;
+  min-height: 100dvh;
   width: 100%;
+  overscroll-behavior: none;
 }
 
 .eyebrow {
