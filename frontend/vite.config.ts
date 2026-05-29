@@ -11,7 +11,7 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: "autoUpdate",
-      includeAssets: ["favicon.svg", "icons.svg"],
+      includeAssets: ["favicon.svg", "icons.svg", "icon.png", "icon2.png"],
       workbox: {
         importScripts: ["notification-sw.js"],
       },
@@ -28,6 +28,18 @@ export default defineConfig({
             src: "/favicon.svg",
             sizes: "any",
             type: "image/svg+xml",
+            purpose: "any maskable",
+          },
+          {
+            src: "/icon.png",
+            sizes: "512x512",
+            type: "image/png",
+            purpose: "any maskable",
+          },
+          {
+            src: "/icon2.png",
+            sizes: "512x512",
+            type: "image/png",
             purpose: "any maskable",
           },
         ],

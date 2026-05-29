@@ -2,13 +2,117 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link id="favicon" rel="icon" type="image/png" href="/icon2.png" />
+    <link id="apple-icon" rel="apple-touch-icon" href="/icon2.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <meta name="theme-color" content="#f8fbfb" />
+    <meta name="theme-color" content="#f8fbfb" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#121212" media="(prefers-color-scheme: dark)" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="Alaqay" />
     <title>Alaqay</title>
+    <script>
+      (function() {
+        function updateThemeIcons() {
+          try {
+            const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            
+            // 1. Dynamic Favicon & Apple Touch Icon
+            const favicon = document.getElementById('favicon');
+            const appleIcon = document.getElementById('apple-icon');
+            const targetIcon = isDark ? '/icon.png' : '/icon2.png';
+            
+            if (favicon && favicon.getAttribute('href') !== targetIcon) {
+              favicon.setAttribute('href', targetIcon);
+            }
+            if (appleIcon && appleIcon.getAttribute('href') !== targetIcon) {
+              appleIcon.setAttribute('href', targetIcon);
+            }
+
+            // 2. Dynamic PWA Manifest via Blob URL (to ensure correct icon and theme on install prompt)
+            const manifestEl = document.querySelector('link[rel="manifest"]');
+            if (manifestEl) {
+              const currentHref = manifestEl.getAttribute('href');
+              // Only load and swap if it's the static manifest path and not already a Blob
+              if (currentHref && !currentHref.startsWith('blob:') && !currentHref.startsWith('data:')) {
+                // Keep track of the original manifest URL to refetch on theme toggle
+                if (!window.__originalManifestHref) {
+                  window.__originalManifestHref = currentHref;
+                }
+                
+                fetch(window.__originalManifestHref)
+                  .then(r => r.json())
+                  .then(manifest => {
+                    // Update icons list dynamically
+                    manifest.icons = (manifest.icons || []).map(icon => {
+                      if (icon.type === 'image/png') {
+                        icon.src = isDark ? '/icon.png' : '/icon2.png';
+                      }
+                      return icon;
+                    });
+                    // Sync manifest theme/background colors
+                    manifest.theme_color = isDark ? '#121212' : '#9be21d';
+                    manifest.background_color = isDark ? '#121212' : '#f8fbfb';
+
+                    const blob = new Blob([JSON.stringify(manifest, null, 2)], { type: 'application/json' });
+                    const newUrl = URL.createObjectURL(blob);
+                    
+                    // Revoke old object URL if exists to avoid memory leak
+                    if (window.__currentManifestBlobUrl) {
+                      URL.revokeObjectURL(window.__currentManifestBlobUrl);
+                    }
+                    window.__currentManifestBlobUrl = newUrl;
+                    
+                    manifestEl.setAttribute('href', newUrl);
+                  })
+                  .catch(err => console.error('Failed to load/update manifest:', err));
+              } else if (window.__originalManifestHref) {
+                // If it is already a blob URL, but the theme changed, refetch original and update
+                fetch(window.__originalManifestHref)
+                  .then(r => r.json())
+                  .then(manifest => {
+                    manifest.icons = (manifest.icons || []).map(icon => {
+                      if (icon.type === 'image/png') {
+                        icon.src = isDark ? '/icon.png' : '/icon2.png';
+                      }
+                      return icon;
+                    });
+                    manifest.theme_color = isDark ? '#121212' : '#9be21d';
+                    manifest.background_color = isDark ? '#121212' : '#f8fbfb';
+
+                    const blob = new Blob([JSON.stringify(manifest, null, 2)], { type: 'application/json' });
+                    const newUrl = URL.createObjectURL(blob);
+                    
+                    if (window.__currentManifestBlobUrl) {
+                      URL.revokeObjectURL(window.__currentManifestBlobUrl);
+                    }
+                    window.__currentManifestBlobUrl = newUrl;
+                    
+                    manifestEl.setAttribute('href', newUrl);
+                  })
+                  .catch(err => console.error('Failed to update manifest on theme change:', err));
+              }
+            }
+          } catch (e) {
+            console.error('Error updating theme-aware icons:', e);
+          }
+        }
+
+        // Run immediately when this script block evaluates
+        updateThemeIcons();
+
+        // Run again on DOMContentLoaded to catch elements if they weren't ready
+        window.addEventListener('DOMContentLoaded', updateThemeIcons);
+
+        // Listen for system theme changes in real-time
+        const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+        if (mediaQuery.addEventListener) {
+          mediaQuery.addEventListener('change', updateThemeIcons);
+        } else if (mediaQuery.addListener) {
+          mediaQuery.addListener(updateThemeIcons);
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
