@@ -1,10 +1,11 @@
 import { HugeiconsIcon } from "@hugeicons/react"
 import { CheckmarkCircle02Icon, PlayCircleIcon } from "@hugeicons/core-free-icons"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 
 import { BrushMirrorSession } from "@/components/brush/BrushMirrorSession"
 import { SparkGlyph } from "@/components/sparks/SparkGlyph"
 import { Button } from "@/components/ui/button"
+import { fireBrushCompleteConfetti } from "@/lib/confetti"
 import { useBrushSession } from "@/hooks/useBrushSession"
 
 type BrushView = "ready" | "brushing" | "done"
@@ -213,6 +214,10 @@ function BrushSessionScreen({
 }
 
 function BrushDoneScreen({ onBrushAgain, onClose }: { onBrushAgain: () => void; onClose?: () => void }) {
+  useEffect(() => {
+    fireBrushCompleteConfetti()
+  }, [])
+
   return (
     <div className="screen-stack brush-screen">
       <section className="brush-done-hero">

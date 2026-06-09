@@ -1,3 +1,14 @@
+@keyframes spark-pulse {
+  0%, 100% {
+    box-shadow: 0 10px 24px oklch(0.6 0.18 126 / 0.16);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 10px 36px oklch(0.6 0.18 126 / 0.26);
+    transform: scale(1.06);
+  }
+}
+
 .spark-glyph {
   display: inline-grid;
   place-items: center;
@@ -24,6 +35,16 @@
   color: oklch(0.34 0.11 132);
   background: oklch(0.91 0.16 126);
   box-shadow: 0 10px 24px oklch(0.6 0.18 126 / 0.16);
+  animation: spark-pulse 3s ease-in-out infinite;
+  will-change: transform;
+}
+
+.spark-done.spark-lg {
+  animation: spark-pulse 2.5s ease-in-out infinite;
+}
+
+.spark-done.spark-sm {
+  animation: none;
 }
 
 .spark-active {

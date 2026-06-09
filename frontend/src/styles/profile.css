@@ -108,8 +108,7 @@
   font-weight: 820;
 }
 
-.profile-field input,
-.time-setting input {
+.profile-field input {
   height: 44px;
   border-radius: 14px;
   border-color: oklch(0.86 0.01 220);
@@ -163,25 +162,29 @@
   gap: 0.5rem;
 }
 
-.time-setting input {
+.time-drum-button {
   width: 100%;
   box-sizing: border-box;
   margin-top: 0.15rem;
-  font-size: 1.05rem;
-  font-weight: 700;
-  color: oklch(0.17 0.018 224);
-  padding: 0.4rem 0.6rem;
+  padding: 0.5rem 0.6rem;
   border: 1px solid oklch(0.86 0.01 220);
-  border-radius: 12px;
+  border-radius: 14px;
   background: oklch(0.995 0.002 197);
+  color: oklch(0.17 0.018 224);
+  font-size: 1.25rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+  cursor: pointer;
   transition: all 0.2s ease;
+  text-align: center;
+  -webkit-tap-highlight-color: transparent;
 }
 
-.time-setting input:focus {
+.time-drum-button:active {
   border-color: oklch(0.82 0.22 128);
-  box-shadow: 0 0 0 2px oklch(0.82 0.22 128 / 0.15);
-  background: oklch(1 0 0);
-  outline: none;
+  background: oklch(0.98 0.01 128 / 0.3);
+  transform: scale(0.97);
 }
 
 .duration-setting {
