@@ -1,6 +1,5 @@
 import { HugeiconsIcon } from "@hugeicons/react"
 import type { ComponentProps, ReactNode } from "react"
-import { useState } from "react"
 import {
   Camera01Icon,
   Clock01Icon,
@@ -19,7 +18,6 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import type { NotificationSupportState } from "@/lib/notifications"
-import { TimeDrumPicker } from "@/components/ui/TimeDrumPicker"
 
 type SettingRowProps = {
   helper: string
@@ -232,27 +230,13 @@ function TimeSetting({
   onChange,
   value,
 }: Omit<SettingRowProps, "helper"> & { onChange: (value: string) => void }) {
-  const [isOpen, setIsOpen] = useState(false)
-
   return (
     <label className="setting-pill time-setting">
       <div className="time-setting-header">
         <span><HugeiconsIcon icon={icon} size={18} /></span>
         <small>{label}</small>
       </div>
-      <button type="button" className="time-drum-button" onClick={() => setIsOpen(true)}>
-        {value}
-      </button>
-      {isOpen && (
-        <TimeDrumPicker
-          value={value}
-          onChange={(next) => {
-            onChange(next)
-            setIsOpen(false)
-          }}
-          onClose={() => setIsOpen(false)}
-        />
-      )}
+      <Input type="time" value={value} onChange={(event) => onChange(event.target.value)} />
     </label>
   )
 }
