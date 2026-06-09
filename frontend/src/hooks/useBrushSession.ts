@@ -15,10 +15,12 @@ export type BrushZoneProgress = {
 const SESSION_SECONDS = 120
 
 const zoneTemplate: Omit<BrushZoneProgress, "progress">[] = [
-  { id: "outer", label: "Outer teeth", secondsFrom: 0, secondsTo: 30 },
-  { id: "inner", label: "Inside zones", secondsFrom: 30, secondsTo: 60 },
-  { id: "left", label: "Left side", secondsFrom: 60, secondsTo: 90 },
-  { id: "right", label: "Right side", secondsFrom: 90, secondsTo: 120 },
+  { id: "upper-outside", label: "Upper outside", secondsFrom: 0, secondsTo: 20 },
+  { id: "lower-outside", label: "Lower outside", secondsFrom: 20, secondsTo: 40 },
+  { id: "left-side", label: "Left side", secondsFrom: 40, secondsTo: 60 },
+  { id: "right-side", label: "Right side", secondsFrom: 60, secondsTo: 80 },
+  { id: "upper-inside", label: "Upper inside", secondsFrom: 80, secondsTo: 100 },
+  { id: "lower-inside", label: "Lower inside", secondsFrom: 100, secondsTo: 120 },
 ]
 
 export function useBrushSession() {

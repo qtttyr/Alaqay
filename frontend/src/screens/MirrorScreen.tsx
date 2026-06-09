@@ -1,8 +1,8 @@
 import { HugeiconsIcon } from "@hugeicons/react"
-import { CheckmarkCircle02Icon, PlayCircleIcon, Timer02Icon } from "@hugeicons/core-free-icons"
-import { useState, type CSSProperties } from "react"
+import { CheckmarkCircle02Icon, PlayCircleIcon } from "@hugeicons/core-free-icons"
+import { useState } from "react"
 
-import { ProgressLine } from "@/components/sparks/ProgressLine"
+import { BrushMirrorSession } from "@/components/brush/BrushMirrorSession"
 import { SparkGlyph } from "@/components/sparks/SparkGlyph"
 import { Button } from "@/components/ui/button"
 import { useBrushSession } from "@/hooks/useBrushSession"
@@ -36,8 +36,7 @@ export function MirrorScreen({ onClose, showReminder = true }: MirrorScreenProps
   if (view === "brushing") {
     return (
       <BrushSessionScreen
-        activeZone={session.activeZone.label}
-        elapsed={session.elapsed}
+        activeZone={session.activeZone}
         error={session.error}
         isRunning={session.isRunning}
         isSaving={session.isSaving}
@@ -168,7 +167,6 @@ function BrushReminderScreen({
 
 function BrushSessionScreen({
   activeZone,
-  elapsed,
   error,
   isRunning,
   isSaving,
@@ -179,8 +177,7 @@ function BrushSessionScreen({
   totalSeconds,
   zones,
 }: {
-  activeZone: string
-  elapsed: number
+  activeZone: { id: string; label: string; progress: number }
   error: string | null
   isRunning: boolean
   isSaving: boolean
@@ -193,36 +190,18 @@ function BrushSessionScreen({
 }) {
   return (
     <div className="screen-stack brush-screen">
-      <section className="brush-session-hero">
-        <div className="brush-ring" style={{ "--brush-progress": `${(elapsed / totalSeconds) * 360}deg` } as CSSProperties}>
-          <div>
-            <strong>{formatTime(remainingSeconds)}</strong>
-            <span>{activeZone}</span>
-          </div>
-        </div>
-        <p>Gentle circles. No pressure. Keep the rhythm steady.</p>
-      </section>
-
-      <section className="brush-zone-list">
-        {zones.map((zone) => (
-          <div className={zone.label === activeZone ? "active" : ""} key={zone.id}>
-            <span>{zone.label}</span>
-            <strong>{zone.progress}%</strong>
-            <ProgressLine value={zone.progress} />
-          </div>
-        ))}
-      </section>
-
-      <div className="brush-actions">
-        <Button variant="outline" onClick={isRunning ? onPause : onResume}>
-          <HugeiconsIcon icon={Timer02Icon} size={18} />
-          {isRunning ? "Pause" : "Resume"}
-        </Button>
-        <Button className="primary-glow" onClick={onDone} disabled={isSaving}>
-          {isSaving ? "Saving..." : "Finish"}
-        </Button>
-      </div>
-      {error && <p className="brush-error">{error}</p>}
+      <BrushMirrorSession
+        activeZone={activeZone}
+        error={error}
+        isRunning={isRunning}
+        isSaving={isSaving}
+        remainingSeconds={remainingSeconds}
+        totalSeconds={totalSeconds}
+        zones={zones}
+        onDone={onDone}
+        onPause={onPause}
+        onResume={onResume}
+      />
     </div>
   )
 }
@@ -242,10 +221,4 @@ function BrushDoneScreen({ onBrushAgain, onClose }: { onBrushAgain: () => void; 
       </div>
     </div>
   )
-}
-
-function formatTime(seconds: number) {
-  const minutes = Math.floor(seconds / 60)
-  const rest = seconds % 60
-  return `${minutes}:${rest.toString().padStart(2, "0")}`
 }

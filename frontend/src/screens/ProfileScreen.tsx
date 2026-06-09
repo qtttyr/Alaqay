@@ -1,34 +1,81 @@
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 
 import {
   AccountCard,
   PermissionsCard,
+  ProfileDetailsCard,
   RoutineCard,
 } from "@/components/profile/ProfileSettings"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { profile as mockProfile } from "@/data/alaqayMock"
+import { sparksApi, toDateKey } from "@/api/sparksApi"
 import { useAuth } from "@/hooks/useAuth"
 import { notificationService, type NotificationSupportState } from "@/lib/notifications"
 
+const DEFAULT_MORNING = "07:00"
+const DEFAULT_EVENING = "21:00"
+
 export function ProfileScreen() {
-  const { logout, profile, updateProfile, user } = useAuth()
+  const { dataVersion, logout, profile, updateProfile, user } = useAuth()
   const [error, setError] = useState<string | null>(null)
   const [isSavingNotifications, setIsSavingNotifications] = useState(false)
+  const [isSavingProfile, setIsSavingProfile] = useState(false)
+  const [isSavingRoutine, setIsSavingRoutine] = useState(false)
   const [isSigningOut, setIsSigningOut] = useState(false)
   const [permissionState, setPermissionState] = useState<NotificationSupportState>(() => notificationService.getPermission())
+  const [rangeSparks, setRangeSparks] = useState<Array<{ date: string; status: string }>>([])
+  const [isLoadingMetrics, setIsLoadingMetrics] = useState(true)
+  const [nameDraft, setNameDraft] = useState("")
+  const [morningDraft, setMorningDraft] = useState(DEFAULT_MORNING)
+  const [eveningDraft, setEveningDraft] = useState(DEFAULT_EVENING)
+
+  useEffect(() => {
+    if (!user) return
+    let cancelled = false
+
+    const load = async () => {
+      setIsLoadingMetrics(true)
+      const end = new Date()
+      const start = addDays(end, -13)
+
+      try {
+        await sparksApi.ensureTodaySparks(user.id)
+        const range = await sparksApi.getSparksRange(user.id, toDateKey(start), toDateKey(end))
+        if (!cancelled) setRangeSparks(range)
+      } catch {
+        if (!cancelled) setRangeSparks([])
+      } finally {
+        if (!cancelled) setIsLoadingMetrics(false)
+      }
+    }
+
+    void load()
+    return () => { cancelled = true }
+  }, [dataVersion, user])
 
   const displayName = profile?.username || user?.user_metadata?.username || user?.email?.split("@")[0] || "Alaqay"
   const initials = getInitials(displayName)
   const email = user?.email ?? "No email"
-  const morningTime = formatTime(profile?.morning_time ?? mockProfile.morningTime)
-  const eveningTime = formatTime(profile?.evening_time ?? mockProfile.eveningTime)
+  const morningTime = formatTime(profile?.morning_time ?? DEFAULT_MORNING)
+  const eveningTime = formatTime(profile?.evening_time ?? DEFAULT_EVENING)
+
+  useEffect(() => {
+    setNameDraft(displayName)
+    setMorningDraft(morningTime)
+    setEveningDraft(eveningTime)
+  }, [displayName, eveningTime, morningTime])
+
+  const { streak, totalSparks, level } = useMemo(() => {
+    const s = calculateStreak(rangeSparks)
+    const t = rangeSparks.filter((spark) => spark.status === "done").length
+    return { streak: s, totalSparks: t, level: getLevel(t) }
+  }, [rangeSparks])
 
   const summary = useMemo(() => ([
-    { label: "Streak", value: mockProfile.streak },
-    { label: "Sparks", value: mockProfile.totalSparks },
-    { label: "Age", value: profile?.age_group ?? mockProfile.age },
+    { label: "Streak", value: isLoadingMetrics ? "..." : streak },
+    { label: "Sparks", value: isLoadingMetrics ? "..." : totalSparks },
+    { label: "Age", value: profile?.age_group ?? "-" },
     { label: "Mode", value: profile?.age_group && profile.age_group < 14 ? "Play" : "Calm" },
-  ]), [profile?.age_group])
+  ]), [isLoadingMetrics, profile?.age_group, streak, totalSparks])
 
   const handleSignOut = async () => {
     setError(null)
@@ -65,6 +112,47 @@ export function ProfileScreen() {
     }
   }
 
+  const handleSaveProfile = async () => {
+    const username = nameDraft.trim()
+    if (!username) {
+      setError("Name cannot be empty.")
+      return
+    }
+
+    setError(null)
+    setIsSavingProfile(true)
+
+    try {
+      await updateProfile({ username })
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not update profile.")
+    } finally {
+      setIsSavingProfile(false)
+    }
+  }
+
+  const handleSaveRoutine = async () => {
+    if (!isValidTime(morningDraft) || !isValidTime(eveningDraft)) {
+      setError("Choose valid morning and evening times.")
+      return
+    }
+
+    setError(null)
+    setIsSavingRoutine(true)
+
+    try {
+      await updateProfile({
+        evening_time: eveningDraft,
+        morning_time: morningDraft,
+      })
+      if (user) await sparksApi.ensureTodaySparks(user.id)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not update routine.")
+    } finally {
+      setIsSavingRoutine(false)
+    }
+  }
+
   return (
     <div className="screen-stack">
       <header className="profile-hero">
@@ -74,7 +162,7 @@ export function ProfileScreen() {
         <div>
           <p className="eyebrow">Profile</p>
           <h1>{displayName}</h1>
-          <span>{mockProfile.level}</span>
+          <span>{level}</span>
         </div>
       </header>
 
@@ -87,7 +175,20 @@ export function ProfileScreen() {
         ))}
       </section>
 
-      <RoutineCard morningTime={morningTime} eveningTime={eveningTime} />
+      <ProfileDetailsCard
+        displayName={nameDraft}
+        isSaving={isSavingProfile}
+        onDisplayNameChange={setNameDraft}
+        onSave={handleSaveProfile}
+      />
+      <RoutineCard
+        eveningTime={eveningDraft}
+        isSaving={isSavingRoutine}
+        morningTime={morningDraft}
+        onEveningTimeChange={setEveningDraft}
+        onMorningTimeChange={setMorningDraft}
+        onSave={handleSaveRoutine}
+      />
       <PermissionsCard
         isSaving={isSavingNotifications}
         notificationsEnabled={profile?.notifications_enabled ?? false}
@@ -110,4 +211,39 @@ function getInitials(name: string) {
 
 function formatTime(value: string) {
   return value.slice(0, 5)
+}
+
+function isValidTime(value: string) {
+  return /^([01]\d|2[0-3]):[0-5]\d$/.test(value)
+}
+
+function calculateStreak(records: Array<{ date: string; status: string }>) {
+  const doneDates = new Set(
+    records
+      .filter((spark) => spark.status === "done")
+      .map((spark) => spark.date),
+  )
+
+  let streak = 0
+  for (let offset = 0; offset < 14; offset += 1) {
+    const dateKey = toDateKey(addDays(new Date(), -offset))
+    if (!doneDates.has(dateKey)) break
+    streak += 1
+  }
+
+  return streak
+}
+
+function addDays(date: Date, days: number) {
+  const next = new Date(date)
+  next.setDate(date.getDate() + days)
+  return next
+}
+
+function getLevel(totalSparks: number) {
+  if (totalSparks >= 200) return "Spark Master"
+  if (totalSparks >= 100) return "Spark Keeper"
+  if (totalSparks >= 50) return "Spark Builder"
+  if (totalSparks >= 10) return "Spark Starter"
+  return "New Spark"
 }

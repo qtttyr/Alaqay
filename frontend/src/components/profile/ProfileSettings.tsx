@@ -3,6 +3,7 @@ import type { ComponentProps, ReactNode } from "react"
 import {
   Camera01Icon,
   Clock01Icon,
+  Edit02Icon,
   Logout03Icon,
   Moon02Icon,
   Notification02Icon,
@@ -13,6 +14,7 @@ import {
 } from "@hugeicons/core-free-icons"
 
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import type { NotificationSupportState } from "@/lib/notifications"
 
 type SettingRowProps = {
@@ -24,7 +26,18 @@ type SettingRowProps = {
 
 type RoutineCardProps = {
   eveningTime: string
+  isSaving: boolean
   morningTime: string
+  onEveningTimeChange: (value: string) => void
+  onMorningTimeChange: (value: string) => void
+  onSave: () => void
+}
+
+type ProfileDetailsCardProps = {
+  displayName: string
+  isSaving: boolean
+  onDisplayNameChange: (value: string) => void
+  onSave: () => void
 }
 
 type AccountCardProps = {
@@ -41,13 +54,51 @@ type PermissionsCardProps = {
   permission: NotificationSupportState
 }
 
-export function RoutineCard({ eveningTime, morningTime }: RoutineCardProps) {
+export function ProfileDetailsCard({
+  displayName,
+  isSaving,
+  onDisplayNameChange,
+  onSave,
+}: ProfileDetailsCardProps) {
+  return (
+    <section className="profile-card">
+      <ProfileSectionTitle icon={Edit02Icon} title="Personal details" />
+      <label className="profile-field">
+        <span>Name</span>
+        <Input
+          maxLength={32}
+          value={displayName}
+          onChange={(event) => onDisplayNameChange(event.target.value)}
+          placeholder="Your name"
+        />
+      </label>
+      <Button className="profile-save-button" onClick={onSave} disabled={isSaving}>
+        {isSaving ? "Saving..." : "Save name"}
+      </Button>
+    </section>
+  )
+}
+
+export function RoutineCard({
+  eveningTime,
+  isSaving,
+  morningTime,
+  onEveningTimeChange,
+  onMorningTimeChange,
+  onSave,
+}: RoutineCardProps) {
   return (
     <section className="profile-card">
       <ProfileSectionTitle icon={Clock01Icon} title="Spark routine" />
       <div className="routine-settings-grid">
-        <SettingPill icon={Sun01Icon} label="Morning" value={morningTime} />
-        <SettingPill icon={Moon02Icon} label="Evening" value={eveningTime} />
+        <TimeSetting icon={Sun01Icon} label="Morning" value={morningTime} onChange={onMorningTimeChange} />
+        <TimeSetting icon={Moon02Icon} label="Evening" value={eveningTime} onChange={onEveningTimeChange} />
+      </div>
+      <div className="routine-save-row">
+        <small>Future Sparks follow this schedule.</small>
+        <Button className="profile-save-button" onClick={onSave} disabled={isSaving}>
+          {isSaving ? "Saving..." : "Save routine"}
+        </Button>
       </div>
     </section>
   )
@@ -67,15 +118,18 @@ export function PermissionsCard({
       <div className="settings-rows">
         <SettingRow
           action={(
-            <Button
-              className="setting-row-button"
-              size="sm"
-              variant={notificationsEnabled ? "outline" : "default"}
-              onClick={onToggleNotifications}
-              disabled={isSaving || permission === "unsupported"}
-            >
-              {isSaving ? "Saving" : notificationsEnabled ? "Turn off" : "Enable"}
-            </Button>
+            <div className="setting-row-action">
+              <em data-status={reminderValue.toLowerCase()}>{reminderValue}</em>
+              <Button
+                className="setting-row-button"
+                size="sm"
+                variant={notificationsEnabled ? "outline" : "default"}
+                onClick={onToggleNotifications}
+                disabled={isSaving || permission === "unsupported"}
+              >
+                {isSaving ? "Saving" : notificationsEnabled ? "Turn off" : "Enable"}
+              </Button>
+            </div>
           )}
           icon={Notification02Icon}
           label="Reminders"
@@ -115,13 +169,18 @@ function ProfileSectionTitle({ icon, title }: { icon: SettingRowProps["icon"]; t
   )
 }
 
-function SettingPill({ icon, label, value }: Omit<SettingRowProps, "helper">) {
+function TimeSetting({
+  icon,
+  label,
+  onChange,
+  value,
+}: Omit<SettingRowProps, "helper"> & { onChange: (value: string) => void }) {
   return (
-    <div className="setting-pill">
+    <label className="setting-pill time-setting">
       <span><HugeiconsIcon icon={icon} size={18} /></span>
       <small>{label}</small>
-      <strong>{value}</strong>
-    </div>
+      <Input type="time" value={value} onChange={(event) => onChange(event.target.value)} />
+    </label>
   )
 }
 

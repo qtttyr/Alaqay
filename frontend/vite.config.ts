@@ -11,9 +11,11 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: "autoUpdate",
-      includeAssets: ["favicon.svg", "icons.svg", "icon.png", "icon2.png"],
+      includeAssets: ["favicon.svg", "icons.svg", "offline.html"],
       workbox: {
         importScripts: ["notification-sw.js"],
+        navigateFallback: "/offline.html",
+        globIgnores: ["**/icon*.png"],
       },
       manifest: {
         name: "Alaqay",

@@ -229,6 +229,261 @@
   gap: 0.75rem;
 }
 
+.brush-mirror-shell {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.brush-mirror-stage {
+  position: relative;
+  min-height: 560px;
+  overflow: hidden;
+  border: 1px solid oklch(0.86 0.02 220);
+  border-radius: 30px;
+  background:
+    radial-gradient(circle at 50% 32%, oklch(0.92 0.12 128 / 0.34), transparent 28%),
+    linear-gradient(180deg, oklch(0.18 0.018 220), oklch(0.1 0.012 220));
+  box-shadow: 0 18px 42px oklch(0.18 0.02 220 / 0.14);
+  isolation: isolate;
+}
+
+.brush-mirror-stage video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1);
+}
+
+.brush-mirror-stage::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background:
+    linear-gradient(180deg, oklch(0 0 0 / 0.34), transparent 22%, transparent 62%, oklch(0 0 0 / 0.5)),
+    radial-gradient(circle at 50% 44%, transparent 0 28%, oklch(0 0 0 / 0.18) 58%);
+  pointer-events: none;
+}
+
+.brush-camera-fallback {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 0.55rem;
+  padding: 2rem;
+  color: oklch(0.96 0.01 220);
+  text-align: center;
+}
+
+.brush-camera-fallback strong {
+  font-size: 1.1rem;
+  font-weight: 920;
+}
+
+.brush-camera-fallback span {
+  max-width: 250px;
+  color: oklch(0.88 0.01 220 / 0.78);
+  font-size: 0.84rem;
+  font-weight: 720;
+  line-height: 1.45;
+}
+
+.mirror-topbar,
+.mirror-instruction,
+.mirror-zone-strip,
+.brush-mirror-controls {
+  position: relative;
+  z-index: 3;
+}
+
+.mirror-topbar {
+  position: absolute;
+  top: 0.8rem;
+  left: 0.8rem;
+  right: 0.8rem;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid oklch(1 0 0 / 0.18);
+  border-radius: 999px;
+  background: oklch(0.12 0.01 220 / 0.58);
+  color: white;
+  backdrop-filter: blur(18px);
+}
+
+.mirror-topbar span,
+.mirror-topbar em {
+  display: inline-grid;
+  place-items: center;
+  min-width: 48px;
+  height: 34px;
+  border-radius: 999px;
+  background: oklch(1 0 0 / 0.13);
+  font-size: 0.8rem;
+  font-style: normal;
+  font-weight: 900;
+}
+
+.mirror-topbar strong {
+  overflow: hidden;
+  font-size: 0.92rem;
+  font-weight: 920;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mirror-face-guide {
+  position: absolute;
+  inset: 5.6rem 1.25rem 8.2rem;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+
+.mirror-face-guide::before {
+  content: "";
+  position: absolute;
+  width: min(68%, 260px);
+  aspect-ratio: 0.72;
+  border: 1px solid oklch(1 0 0 / 0.28);
+  border-radius: 48% 48% 44% 44%;
+  box-shadow: inset 0 0 42px oklch(1 0 0 / 0.08), 0 0 30px oklch(0.84 0.18 128 / 0.16);
+}
+
+.mirror-zone {
+  position: absolute;
+  border: 2px solid oklch(1 0 0 / 0.28);
+  background: oklch(1 0 0 / 0.08);
+  opacity: 0.58;
+  transition: opacity 180ms ease, transform 180ms ease, background 180ms ease, border-color 180ms ease;
+}
+
+.mirror-zone.active {
+  border-color: oklch(0.88 0.2 128);
+  background: oklch(0.82 0.22 128 / 0.32);
+  box-shadow: 0 0 28px oklch(0.82 0.22 128 / 0.44);
+  opacity: 1;
+  transform: scale(1.04);
+}
+
+.mirror-zone.upper,
+.mirror-zone.lower {
+  left: 50%;
+  width: min(44%, 174px);
+  height: 34px;
+  border-radius: 999px;
+  transform: translateX(-50%);
+}
+
+.mirror-zone.upper.active,
+.mirror-zone.lower.active {
+  transform: translateX(-50%) scale(1.05);
+}
+
+.mirror-zone.upper {
+  top: 46%;
+}
+
+.mirror-zone.lower {
+  top: calc(46% + 42px);
+}
+
+.mirror-zone.left,
+.mirror-zone.right {
+  top: 46%;
+  width: 44px;
+  height: 84px;
+  border-radius: 999px;
+}
+
+.mirror-zone.left {
+  left: 22%;
+}
+
+.mirror-zone.right {
+  right: 22%;
+}
+
+.mirror-instruction {
+  position: absolute;
+  left: 1rem;
+  right: 1rem;
+  bottom: 4.9rem;
+  display: grid;
+  justify-items: center;
+  gap: 0.22rem;
+  color: white;
+  text-align: center;
+  text-shadow: 0 1px 12px oklch(0 0 0 / 0.42);
+}
+
+.mirror-instruction strong {
+  font-size: 1.28rem;
+  font-weight: 950;
+  line-height: 1;
+}
+
+.mirror-instruction span {
+  color: oklch(0.94 0.01 220 / 0.82);
+  font-size: 0.82rem;
+  font-weight: 760;
+}
+
+.mirror-zone-strip {
+  position: absolute;
+  left: 1rem;
+  right: 1rem;
+  bottom: 1.25rem;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 0.35rem;
+}
+
+.mirror-zone-strip span {
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: oklch(1 0 0 / 0.2);
+}
+
+.mirror-zone-strip span::before {
+  content: "";
+  display: block;
+  width: var(--zone-progress);
+  height: 100%;
+  border-radius: inherit;
+  background: oklch(0.82 0.22 128);
+}
+
+.mirror-zone-strip span.active {
+  background: oklch(1 0 0 / 0.35);
+  box-shadow: 0 0 16px oklch(0.82 0.22 128 / 0.32);
+}
+
+.mirror-zone-strip span.done::before {
+  width: 100%;
+}
+
+.brush-mirror-controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.brush-mirror-controls button {
+  min-height: 46px;
+  border-radius: 999px;
+  font-weight: 900;
+}
+
 .brush-done-hero {
   min-height: 360px;
   align-content: center;
@@ -265,5 +520,26 @@
 
   .brush-reminder-action {
     min-height: 120px;
+  }
+
+  .brush-mirror-stage {
+    min-height: 500px;
+    border-radius: 26px;
+  }
+
+  .mirror-topbar {
+    grid-template-columns: auto 1fr;
+  }
+
+  .mirror-topbar em {
+    display: none;
+  }
+
+  .mirror-zone.left {
+    left: 16%;
+  }
+
+  .mirror-zone.right {
+    right: 16%;
   }
 }
