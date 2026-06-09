@@ -177,8 +177,10 @@ function TimeSetting({
 }: Omit<SettingRowProps, "helper"> & { onChange: (value: string) => void }) {
   return (
     <label className="setting-pill time-setting">
-      <span><HugeiconsIcon icon={icon} size={18} /></span>
-      <small>{label}</small>
+      <div className="time-setting-header">
+        <span><HugeiconsIcon icon={icon} size={18} /></span>
+        <small>{label}</small>
+      </div>
       <Input type="time" value={value} onChange={(event) => onChange(event.target.value)} />
     </label>
   )

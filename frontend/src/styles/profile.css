@@ -130,7 +130,7 @@
 }
 
 .profile-section-title span,
-.setting-pill > span,
+.setting-pill span,
 .setting-row-icon {
   width: 34px;
   height: 34px;
@@ -148,12 +148,19 @@
 }
 
 .setting-pill {
-  min-height: 104px;
+  min-height: 110px;
+  height: auto;
 }
 
 .time-setting {
   align-content: start;
   gap: 0.45rem;
+}
+
+.time-setting-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .time-setting input {

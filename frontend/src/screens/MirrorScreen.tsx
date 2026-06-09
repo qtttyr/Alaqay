@@ -17,15 +17,18 @@ type MirrorScreenProps = {
 export function MirrorScreen({ onClose, showReminder = true }: MirrorScreenProps) {
   const session = useBrushSession()
   const [isReminderOpen, setIsReminderOpen] = useState(showReminder)
-  const view: BrushView = session.isComplete ? "done" : session.elapsed > 0 || session.isRunning ? "brushing" : "ready"
+  const [hasStarted, setHasStarted] = useState(false)
+  const view: BrushView = session.isComplete ? "done" : hasStarted || session.elapsed > 0 || session.isRunning ? "brushing" : "ready"
 
   const startGuidedBrush = () => {
     setIsReminderOpen(false)
+    setHasStarted(true)
     session.start()
   }
 
   const brushAgain = () => {
     setIsReminderOpen(false)
+    setHasStarted(true)
     session.start()
   }
 
@@ -70,7 +73,10 @@ export function MirrorScreen({ onClose, showReminder = true }: MirrorScreenProps
       isPreparing={session.isPreparing}
       isSaving={session.isSaving}
       onMarkDone={session.markDone}
-      onStart={session.start}
+      onStart={() => {
+        setHasStarted(true)
+        session.start()
+      }}
     />
   )
 }
