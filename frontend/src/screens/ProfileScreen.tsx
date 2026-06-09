@@ -28,6 +28,7 @@ export function ProfileScreen() {
   const [nameDraft, setNameDraft] = useState("")
   const [morningDraft, setMorningDraft] = useState(DEFAULT_MORNING)
   const [eveningDraft, setEveningDraft] = useState(DEFAULT_EVENING)
+  const [brushDurationDraft, setBrushDurationDraft] = useState(120)
   const [soundEnabled, setSoundEnabled] = useState(true)
   const [hapticEnabled, setHapticEnabled] = useState(true)
 
@@ -68,11 +69,13 @@ export function ProfileScreen() {
   const morningTime = formatTime(profile?.morning_time ?? DEFAULT_MORNING)
   const eveningTime = formatTime(profile?.evening_time ?? DEFAULT_EVENING)
 
+  const currentDuration = profile?.brush_duration ?? 120
   useEffect(() => {
     setNameDraft(displayName)
     setMorningDraft(morningTime)
     setEveningDraft(eveningTime)
-  }, [displayName, eveningTime, morningTime])
+    setBrushDurationDraft(currentDuration)
+  }, [currentDuration, displayName, eveningTime, morningTime])
 
   const { streak, totalSparks, level } = useMemo(() => {
     const s = calculateStreak(rangeSparks)
@@ -174,6 +177,7 @@ export function ProfileScreen() {
 
     try {
       await updateProfile({
+        brush_duration: brushDurationDraft,
         evening_time: eveningDraft,
         morning_time: morningDraft,
       })
@@ -214,9 +218,11 @@ export function ProfileScreen() {
         onSave={handleSaveProfile}
       />
       <RoutineCard
+        brushDuration={brushDurationDraft}
         eveningTime={eveningDraft}
         isSaving={isSavingRoutine}
         morningTime={morningDraft}
+        onBrushDurationChange={setBrushDurationDraft}
         onEveningTimeChange={setEveningDraft}
         onMorningTimeChange={setMorningDraft}
         onSave={handleSaveRoutine}

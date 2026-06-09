@@ -27,13 +27,17 @@ type SettingRowProps = {
 }
 
 type RoutineCardProps = {
+  brushDuration: number
   eveningTime: string
   isSaving: boolean
   morningTime: string
+  onBrushDurationChange: (value: number) => void
   onEveningTimeChange: (value: string) => void
   onMorningTimeChange: (value: string) => void
   onSave: () => void
 }
+
+const DURATION_OPTIONS = [90, 120, 180] as const
 
 type ProfileDetailsCardProps = {
   displayName: string
@@ -86,9 +90,11 @@ export function ProfileDetailsCard({
 }
 
 export function RoutineCard({
+  brushDuration,
   eveningTime,
   isSaving,
   morningTime,
+  onBrushDurationChange,
   onEveningTimeChange,
   onMorningTimeChange,
   onSave,
@@ -100,6 +106,7 @@ export function RoutineCard({
         <TimeSetting icon={Sun01Icon} label="Morning" value={morningTime} onChange={onMorningTimeChange} />
         <TimeSetting icon={Moon02Icon} label="Evening" value={eveningTime} onChange={onEveningTimeChange} />
       </div>
+      <DurationSetting value={brushDuration} onChange={onBrushDurationChange} />
       <div className="routine-save-row">
         <small>Future Sparks follow this schedule.</small>
         <Button className="profile-save-button" onClick={onSave} disabled={isSaving}>
@@ -231,6 +238,32 @@ function TimeSetting({
       </div>
       <Input type="time" value={value} onChange={(event) => onChange(event.target.value)} />
     </label>
+  )
+}
+
+function DurationSetting({ value, onChange }: { value: number; onChange: (v: number) => void }) {
+  return (
+    <div className="duration-setting">
+      <div className="duration-setting-header">
+        <span><HugeiconsIcon icon={Clock01Icon} size={14} /></span>
+        <small>Brush duration</small>
+      </div>
+      <div className="duration-options">
+        {DURATION_OPTIONS.map((option) => (
+          <button
+            key={option}
+            type="button"
+            className={`duration-pill${value === option ? " active" : ""}`}
+            onClick={() => onChange(option)}
+            aria-pressed={value === option}
+          >
+            <strong>{option}</strong>
+            <small>s</small>
+          </button>
+        ))}
+      </div>
+      <small className="duration-hint">Each zone adjusts to your pace.</small>
+    </div>
   )
 }
 

@@ -11,6 +11,7 @@ export type Profile = {
   onboarding_completed: boolean
   sound_enabled: boolean | null
   haptic_enabled: boolean | null
+  brush_duration: number | null
   created_at: string
   updated_at: string
 }

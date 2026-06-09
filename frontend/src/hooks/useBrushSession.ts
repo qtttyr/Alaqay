@@ -13,16 +13,26 @@ export type BrushZoneProgress = {
   secondsTo: number
 }
 
-const SESSION_SECONDS = 120
-
-const zoneTemplate: Omit<BrushZoneProgress, "progress">[] = [
-  { id: "upper-outside", label: "Upper outside", secondsFrom: 0, secondsTo: 20 },
-  { id: "lower-outside", label: "Lower outside", secondsFrom: 20, secondsTo: 40 },
-  { id: "left-side", label: "Left side", secondsFrom: 40, secondsTo: 60 },
-  { id: "right-side", label: "Right side", secondsFrom: 60, secondsTo: 80 },
-  { id: "upper-inside", label: "Upper inside", secondsFrom: 80, secondsTo: 100 },
-  { id: "lower-inside", label: "Lower inside", secondsFrom: 100, secondsTo: 120 },
+const ZONE_DEFS: Array<{ id: string; label: string }> = [
+  { id: "upper-outside", label: "Upper outside" },
+  { id: "lower-outside", label: "Lower outside" },
+  { id: "left-side", label: "Left side" },
+  { id: "right-side", label: "Right side" },
+  { id: "upper-inside", label: "Upper inside" },
+  { id: "lower-inside", label: "Lower inside" },
 ]
+
+const DEFAULT_DURATION = 120
+
+function buildZoneIntervals(duration: number): Omit<BrushZoneProgress, "progress">[] {
+  const zoneCount = ZONE_DEFS.length
+  const zoneDuration = duration / zoneCount
+  return ZONE_DEFS.map((def, i) => ({
+    ...def,
+    secondsFrom: i * zoneDuration,
+    secondsTo: (i + 1) * zoneDuration,
+  }))
+}
 
 export function useBrushSession() {
   const { profile, refreshAppData, user } = useAuth()
@@ -34,6 +44,9 @@ export function useBrushSession() {
   const [targetSpark, setTargetSpark] = useState<SparkRecord | null>(null)
   const [startedAt, setStartedAt] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+
+  const sessionDuration = profile?.brush_duration ?? DEFAULT_DURATION
+  const zoneIntervals = useMemo(() => buildZoneIntervals(sessionDuration), [sessionDuration])
 
   useEffect(() => {
     let cancelled = false
@@ -57,8 +70,8 @@ export function useBrushSession() {
 
     const timer = window.setInterval(() => {
       setElapsed((value) => {
-        const next = Math.min(value + 1, SESSION_SECONDS)
-        if (next >= SESSION_SECONDS) {
+        const next = Math.min(value + 1, sessionDuration)
+        if (next >= sessionDuration) {
           setIsRunning(false)
         }
         return next
@@ -66,11 +79,11 @@ export function useBrushSession() {
     }, 1000)
 
     return () => window.clearInterval(timer)
-  }, [isComplete, isRunning])
+  }, [isComplete, isRunning, sessionDuration])
 
-  const zones = useMemo(() => buildZones(elapsed), [elapsed])
+  const zones = useMemo(() => buildZones(elapsed, zoneIntervals), [elapsed, zoneIntervals])
   const activeZone = zones.find((zone) => elapsed >= zone.secondsFrom && elapsed < zone.secondsTo) ?? zones[zones.length - 1]
-  const remainingSeconds = Math.max(SESSION_SECONDS - elapsed, 0)
+  const remainingSeconds = Math.max(sessionDuration - elapsed, 0)
 
   // ── Sync audio preferences from profile ────────────────────────────────
   useEffect(() => {
@@ -119,7 +132,7 @@ export function useBrushSession() {
 
     if (targetSpark.status === "done") {
       setIsLogged(true)
-      setElapsed(SESSION_SECONDS)
+      setElapsed(sessionDuration)
       setIsComplete(true)
       setIsRunning(false)
       refreshAppData()
@@ -130,9 +143,9 @@ export function useBrushSession() {
     setError(null)
 
     try {
-      const zoneProgress = zonesToRecord(buildZones(SESSION_SECONDS))
+      const zoneProgress = zonesToRecord(buildZones(sessionDuration, zoneIntervals))
       const completedSpark = await brushApi.completeBrushSession({
-        durationSeconds: elapsed || SESSION_SECONDS,
+        durationSeconds: elapsed || sessionDuration,
         spark: targetSpark,
         startedAt: startedAt ?? new Date().toISOString(),
         userId: user.id,
@@ -141,7 +154,7 @@ export function useBrushSession() {
       setTargetSpark(completedSpark)
       refreshAppData()
       setIsLogged(true)
-      setElapsed(SESSION_SECONDS)
+      setElapsed(sessionDuration)
       setIsComplete(true)
       setIsRunning(false)
     } catch {
@@ -149,13 +162,13 @@ export function useBrushSession() {
     } finally {
       setIsSaving(false)
     }
-  }, [elapsed, isLogged, refreshAppData, startedAt, targetSpark, user])
+  }, [elapsed, isLogged, refreshAppData, sessionDuration, startedAt, targetSpark, user, zoneIntervals])
 
   useEffect(() => {
-    if (elapsed >= SESSION_SECONDS && !isLogged && !isSaving && targetSpark && user) {
+    if (elapsed >= sessionDuration && !isLogged && !isSaving && targetSpark && user) {
       void markDone()
     }
-  }, [elapsed, isLogged, isSaving, markDone, targetSpark, user])
+  }, [elapsed, isLogged, isSaving, markDone, sessionDuration, targetSpark, user])
 
   return {
     activeZone,
@@ -171,7 +184,7 @@ export function useBrushSession() {
     resume,
     start,
     targetSpark,
-    totalSeconds: SESSION_SECONDS,
+    totalSeconds: sessionDuration,
     zones,
   }
 }
@@ -186,8 +199,8 @@ function selectTargetSpark(sparks: SparkRecord[]) {
     ?? null
 }
 
-function buildZones(elapsed: number): BrushZoneProgress[] {
-  return zoneTemplate.map((zone) => {
+function buildZones(elapsed: number, zoneIntervals: Omit<BrushZoneProgress, "progress">[]): BrushZoneProgress[] {
+  return zoneIntervals.map((zone) => {
     const zoneDuration = zone.secondsTo - zone.secondsFrom
     const zoneElapsed = Math.max(0, Math.min(elapsed - zone.secondsFrom, zoneDuration))
     return {
