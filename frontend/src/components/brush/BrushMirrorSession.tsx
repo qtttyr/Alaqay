@@ -5,6 +5,95 @@ import { useEffect, useRef, type CSSProperties } from "react"
 import { Button } from "@/components/ui/button"
 import { useMirrorCamera } from "@/hooks/useMirrorCamera"
 
+function TeethGuide({ activeZoneId }: { activeZoneId: string }) {
+  const getStyle = (zoneId: string) => {
+    const isActive = activeZoneId === zoneId
+    return {
+      fill: isActive ? "oklch(0.82 0.22 128)" : "rgba(255, 255, 255, 0.15)",
+      stroke: isActive ? "oklch(0.92 0.22 128)" : "rgba(255, 255, 255, 0.3)",
+      strokeWidth: isActive ? 2 : 1,
+      filter: isActive ? "drop-shadow(0px 0px 6px oklch(0.82 0.22 128 / 0.8))" : "none",
+      transition: "all 0.3s ease",
+    }
+  }
+
+  return (
+    <svg width="68" height="68" viewBox="0 0 100 100" className="teeth-guide-svg">
+      {/* Upper Outside (Top Outer Arch) */}
+      <path
+        d="M 15,45 A 35,35 0 0,1 85,45"
+        fill="none"
+        stroke={activeZoneId === "upper-outside" ? "oklch(0.82 0.22 128)" : "rgba(255, 255, 255, 0.2)"}
+        strokeWidth={activeZoneId === "upper-outside" ? "8" : "4"}
+        strokeLinecap="round"
+        style={{
+          filter: activeZoneId === "upper-outside" ? "drop-shadow(0px 0px 8px oklch(0.82 0.22 128))" : "none",
+          transition: "all 0.3s ease"
+        }}
+      />
+
+      {/* Upper Inside (Top Inner Arch) */}
+      <path
+        d="M 25,48 A 25,25 0 0,1 75,48"
+        fill="none"
+        stroke={activeZoneId === "upper-inside" ? "oklch(0.82 0.22 128)" : "rgba(255, 255, 255, 0.2)"}
+        strokeWidth={activeZoneId === "upper-inside" ? "8" : "4"}
+        strokeLinecap="round"
+        style={{
+          filter: activeZoneId === "upper-inside" ? "drop-shadow(0px 0px 8px oklch(0.82 0.22 128))" : "none",
+          transition: "all 0.3s ease"
+        }}
+      />
+
+      {/* Lower Outside (Bottom Outer Arch) */}
+      <path
+        d="M 15,55 A 35,35 0 0,0 85,55"
+        fill="none"
+        stroke={activeZoneId === "lower-outside" ? "oklch(0.82 0.22 128)" : "rgba(255, 255, 255, 0.2)"}
+        strokeWidth={activeZoneId === "lower-outside" ? "8" : "4"}
+        strokeLinecap="round"
+        style={{
+          filter: activeZoneId === "lower-outside" ? "drop-shadow(0px 0px 8px oklch(0.82 0.22 128))" : "none",
+          transition: "all 0.3s ease"
+        }}
+      />
+
+      {/* Lower Inside (Bottom Inner Arch) */}
+      <path
+        d="M 25,52 A 25,25 0 0,0 75,52"
+        fill="none"
+        stroke={activeZoneId === "lower-inside" ? "oklch(0.82 0.22 128)" : "rgba(255, 255, 255, 0.2)"}
+        strokeWidth={activeZoneId === "lower-inside" ? "8" : "4"}
+        strokeLinecap="round"
+        style={{
+          filter: activeZoneId === "lower-inside" ? "drop-shadow(0px 0px 8px oklch(0.82 0.22 128))" : "none",
+          transition: "all 0.3s ease"
+        }}
+      />
+
+      {/* Left Side (Chewing Surfaces - Left Molars) */}
+      <rect
+        x="10"
+        y="42"
+        width="10"
+        height="16"
+        rx="4"
+        style={getStyle("left-side")}
+      />
+
+      {/* Right Side (Chewing Surfaces - Right Molars) */}
+      <rect
+        x="80"
+        y="42"
+        width="10"
+        height="16"
+        rx="4"
+        style={getStyle("right-side")}
+      />
+    </svg>
+  )
+}
+
 type BrushMirrorZone = {
   id: string
   label: string
@@ -43,9 +132,20 @@ export function BrushMirrorSession({
   const cameraReady = camera.status === "ready"
 
   useEffect(() => {
-    if (!videoRef.current || !camera.stream) return
-    videoRef.current.srcObject = camera.stream
-  }, [camera.stream, camera.status])
+    const video = videoRef.current
+    if (!video || !camera.stream) return
+
+    video.defaultMuted = true
+    video.muted = true
+    video.srcObject = camera.stream
+
+    const playPromise = video.play()
+    if (playPromise !== undefined) {
+      playPromise.catch((err) => {
+        console.warn("Autoplay was prevented or video failed to play:", err)
+      })
+    }
+  }, [camera.stream])
 
   useEffect(() => {
     if (camera.status === "requesting" && isRunning) {
@@ -70,6 +170,9 @@ export function BrushMirrorSession({
             autoPlay
             muted
             playsInline
+            onLoadedMetadata={() => {
+              videoRef.current?.play().catch(e => console.warn("Metadata play failed:", e))
+            }}
           />
         )}
 
@@ -81,11 +184,10 @@ export function BrushMirrorSession({
           </div>
         )}
 
-        <div className="mirror-face-guide" aria-hidden="true">
-          <span className={`mirror-zone upper ${isZoneActive(activeZone.id, "upper") ? "active" : ""}`} />
-          <span className={`mirror-zone lower ${isZoneActive(activeZone.id, "lower") ? "active" : ""}`} />
-          <span className={`mirror-zone left ${activeZone.id === "left-side" ? "active" : ""}`} />
-          <span className={`mirror-zone right ${activeZone.id === "right-side" ? "active" : ""}`} />
+        <div className="mirror-face-guide" aria-hidden="true" />
+
+        <div className="mirror-hud-card" aria-label="Teeth Guide">
+          <TeethGuide activeZoneId={activeZone.id} />
         </div>
 
         <div className="mirror-topbar">
@@ -96,7 +198,10 @@ export function BrushMirrorSession({
 
         <div className="mirror-instruction">
           <strong>{getZoneInstruction(activeZone.id)}</strong>
-          <span>Small circles. Light pressure.</span>
+          <div className="rhythm-container">
+            <span className="rhythm-dot" />
+            <span>Small circles. Light pressure.</span>
+          </div>
         </div>
 
         <div className="mirror-zone-strip" aria-label="Brush zones progress">
@@ -143,13 +248,11 @@ function getCameraTitle(status: ReturnType<typeof useMirrorCamera>["status"]) {
 }
 
 function getZoneInstruction(zoneId: string) {
-  if (zoneId.includes("upper")) return "Brush the upper teeth"
-  if (zoneId.includes("lower")) return "Brush the lower teeth"
-  if (zoneId === "left-side") return "Move to the left side"
-  if (zoneId === "right-side") return "Move to the right side"
+  if (zoneId === "upper-outside") return "Brush upper OUTSIDE surfaces"
+  if (zoneId === "upper-inside") return "Brush upper INSIDE surfaces"
+  if (zoneId === "lower-outside") return "Brush lower OUTSIDE surfaces"
+  if (zoneId === "lower-inside") return "Brush lower INSIDE surfaces"
+  if (zoneId === "left-side") return "Brush left chewing surfaces"
+  if (zoneId === "right-side") return "Brush right chewing surfaces"
   return "Follow the highlighted zone"
-}
-
-function isZoneActive(zoneId: string, family: "upper" | "lower") {
-  return zoneId.includes(family)
 }

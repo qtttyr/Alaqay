@@ -3,13 +3,18 @@ import { useCallback, useEffect, useRef, useState } from "react"
 type CameraStatus = "idle" | "requesting" | "ready" | "denied" | "unsupported" | "error"
 
 export function useMirrorCamera(enabled: boolean) {
+  const [stream, setStream] = useState<MediaStream | null>(null)
   const streamRef = useRef<MediaStream | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [status, setStatus] = useState<CameraStatus>("idle")
 
   const stop = useCallback(() => {
-    streamRef.current?.getTracks().forEach((track) => track.stop())
-    streamRef.current = null
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop())
+      streamRef.current = null
+    }
+    setStream(null)
+    setStatus("idle")
   }, [])
 
   const start = useCallback(async () => {
@@ -25,7 +30,7 @@ export function useMirrorCamera(enabled: boolean) {
     setError(null)
 
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
+      const mediaStream = await navigator.mediaDevices.getUserMedia({
         audio: false,
         video: {
           facingMode: "user",
@@ -34,9 +39,10 @@ export function useMirrorCamera(enabled: boolean) {
         },
       })
 
-      streamRef.current = stream
+      streamRef.current = mediaStream
+      setStream(mediaStream)
       setStatus("ready")
-      return stream
+      return mediaStream
     } catch (err) {
       const nextStatus = err instanceof DOMException && err.name === "NotAllowedError" ? "denied" : "error"
       setStatus(nextStatus)
@@ -48,7 +54,6 @@ export function useMirrorCamera(enabled: boolean) {
   useEffect(() => {
     if (!enabled) {
       stop()
-      setStatus("idle")
       return
     }
 
@@ -62,6 +67,6 @@ export function useMirrorCamera(enabled: boolean) {
     start,
     status,
     stop,
-    stream: streamRef.current,
+    stream,
   }
 }
