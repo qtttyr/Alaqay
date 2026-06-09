@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 
 import {
   AccountCard,
@@ -8,6 +8,7 @@ import {
 } from "@/components/profile/ProfileSettings"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { sparksApi, toDateKey } from "@/api/sparksApi"
+import { audioService } from "@/lib/audio"
 import { useAuth } from "@/hooks/useAuth"
 import { notificationService, type NotificationSupportState } from "@/lib/notifications"
 
@@ -27,6 +28,15 @@ export function ProfileScreen() {
   const [nameDraft, setNameDraft] = useState("")
   const [morningDraft, setMorningDraft] = useState(DEFAULT_MORNING)
   const [eveningDraft, setEveningDraft] = useState(DEFAULT_EVENING)
+  const [soundEnabled, setSoundEnabled] = useState(true)
+  const [hapticEnabled, setHapticEnabled] = useState(true)
+
+  // ── Sync audio prefs from profile ──────────────────────────────────────
+  useEffect(() => {
+    if (!profile) return
+    setSoundEnabled(profile.sound_enabled ?? true)
+    setHapticEnabled(profile.haptic_enabled ?? true)
+  }, [profile?.sound_enabled, profile?.haptic_enabled])
 
   useEffect(() => {
     if (!user) return
@@ -112,6 +122,28 @@ export function ProfileScreen() {
     }
   }
 
+  const handleToggleSound = useCallback(async () => {
+    const next = !soundEnabled
+    setSoundEnabled(next)
+    audioService.setSoundEnabled(next)
+    try {
+      await updateProfile({ sound_enabled: next }).catch(() => {})
+    } catch {
+      // Silently handle — audio still works in-memory
+    }
+  }, [soundEnabled, updateProfile])
+
+  const handleToggleHaptic = useCallback(async () => {
+    const next = !hapticEnabled
+    setHapticEnabled(next)
+    audioService.setHapticEnabled(next)
+    try {
+      await updateProfile({ haptic_enabled: next }).catch(() => {})
+    } catch {
+      // Silently handle — haptic still works in-memory
+    }
+  }, [hapticEnabled, updateProfile])
+
   const handleSaveProfile = async () => {
     const username = nameDraft.trim()
     if (!username) {
@@ -190,10 +222,14 @@ export function ProfileScreen() {
         onSave={handleSaveRoutine}
       />
       <PermissionsCard
+        hapticEnabled={hapticEnabled}
         isSaving={isSavingNotifications}
         notificationsEnabled={profile?.notifications_enabled ?? false}
-        permission={permissionState}
+        onToggleHaptic={handleToggleHaptic}
         onToggleNotifications={handleToggleNotifications}
+        onToggleSound={handleToggleSound}
+        permission={permissionState}
+        soundEnabled={soundEnabled}
       />
       <AccountCard email={email} error={error} isSigningOut={isSigningOut} onSignOut={handleSignOut} />
     </div>

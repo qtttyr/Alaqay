@@ -9,6 +9,8 @@ export type Profile = {
   notifications_enabled: boolean
   notification_permission: NotificationPermission | "unsupported" | null
   onboarding_completed: boolean
+  sound_enabled: boolean | null
+  haptic_enabled: boolean | null
   created_at: string
   updated_at: string
 }

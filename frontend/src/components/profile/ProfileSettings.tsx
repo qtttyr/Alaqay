@@ -11,6 +11,8 @@ import {
   ShieldUserIcon,
   Sun01Icon,
   UserCircleIcon,
+  VibrateIcon,
+  VolumeHighIcon,
 } from "@hugeicons/core-free-icons"
 
 import { Button } from "@/components/ui/button"
@@ -48,10 +50,14 @@ type AccountCardProps = {
 }
 
 type PermissionsCardProps = {
+  hapticEnabled: boolean
   isSaving: boolean
   notificationsEnabled: boolean
+  onToggleHaptic: () => void
   onToggleNotifications: () => void
+  onToggleSound: () => void
   permission: NotificationSupportState
+  soundEnabled: boolean
 }
 
 export function ProfileDetailsCard({
@@ -105,10 +111,14 @@ export function RoutineCard({
 }
 
 export function PermissionsCard({
+  hapticEnabled,
   isSaving,
   notificationsEnabled,
+  onToggleHaptic,
   onToggleNotifications,
+  onToggleSound,
   permission,
+  soundEnabled,
 }: PermissionsCardProps) {
   const reminderValue = getReminderValue(notificationsEnabled, permission)
 
@@ -135,6 +145,44 @@ export function PermissionsCard({
           label="Reminders"
           value={reminderValue}
           helper="Soft pushes around your Spark times."
+        />
+        <SettingRow
+          action={(
+            <div className="setting-row-action">
+              <em>{soundEnabled ? "On" : "Off"}</em>
+              <Button
+                className="setting-row-button"
+                size="sm"
+                variant={soundEnabled ? "outline" : "default"}
+                onClick={onToggleSound}
+              >
+                {soundEnabled ? "Turn off" : "Enable"}
+              </Button>
+            </div>
+          )}
+          icon={VolumeHighIcon}
+          label="Sound"
+          value={soundEnabled ? "On" : "Off"}
+          helper="Gentle chimes when zones change."
+        />
+        <SettingRow
+          action={(
+            <div className="setting-row-action">
+              <em>{hapticEnabled ? "On" : "Off"}</em>
+              <Button
+                className="setting-row-button"
+                size="sm"
+                variant={hapticEnabled ? "outline" : "default"}
+                onClick={onToggleHaptic}
+              >
+                {hapticEnabled ? "Turn off" : "Enable"}
+              </Button>
+            </div>
+          )}
+          icon={VibrateIcon}
+          label="Vibration"
+          value={hapticEnabled ? "On" : "Off"}
+          helper="Subtle taps on zone changes."
         />
         <SettingRow icon={Camera01Icon} label="Camera" value="Ask first" helper="Mirror mode requests access only when opened." />
         <SettingRow icon={ShieldUserIcon} label="Privacy" value="Protected" helper="Your routine belongs to your account." />

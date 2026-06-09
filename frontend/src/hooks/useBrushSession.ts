@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
 import { brushApi } from "@/api/brushApi"
 import { sparksApi, type SparkRecord } from "@/api/sparksApi"
+import { audioService } from "@/lib/audio"
 import { useAuth } from "@/hooks/useAuth"
 
 export type BrushZoneProgress = {
@@ -24,7 +25,7 @@ const zoneTemplate: Omit<BrushZoneProgress, "progress">[] = [
 ]
 
 export function useBrushSession() {
-  const { refreshAppData, user } = useAuth()
+  const { profile, refreshAppData, user } = useAuth()
   const [elapsed, setElapsed] = useState(0)
   const [isRunning, setIsRunning] = useState(false)
   const [isComplete, setIsComplete] = useState(false)
@@ -70,6 +71,36 @@ export function useBrushSession() {
   const zones = useMemo(() => buildZones(elapsed), [elapsed])
   const activeZone = zones.find((zone) => elapsed >= zone.secondsFrom && elapsed < zone.secondsTo) ?? zones[zones.length - 1]
   const remainingSeconds = Math.max(SESSION_SECONDS - elapsed, 0)
+
+  // ── Sync audio preferences from profile ────────────────────────────────
+  useEffect(() => {
+    // Default to enabled — user can toggle in settings
+    audioService.setSoundEnabled(profile?.sound_enabled ?? true)
+    audioService.setHapticEnabled(profile?.haptic_enabled ?? true)
+  }, [profile?.sound_enabled, profile?.haptic_enabled])
+
+  // ── Zone-change chime + haptic ──────────────────────────────────────────
+  const prevZoneId = useRef(activeZone.id)
+  useEffect(() => {
+    if (prevZoneId.current !== activeZone.id) {
+      audioService.playZoneChime()
+      audioService.hapticZoneChange()
+      prevZoneId.current = activeZone.id
+    }
+  }, [activeZone.id])
+
+  // ── Session-complete fanfare ────────────────────────────────────────────
+  const didCompleteRef = useRef(false)
+  useEffect(() => {
+    if (isComplete && !didCompleteRef.current) {
+      didCompleteRef.current = true
+      audioService.playSessionComplete()
+      audioService.hapticComplete()
+    }
+    if (!isComplete) {
+      didCompleteRef.current = false
+    }
+  }, [isComplete])
 
   const start = () => {
     setError(null)
