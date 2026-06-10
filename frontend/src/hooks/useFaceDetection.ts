@@ -4,12 +4,22 @@ import { FaceTracker, type FaceBox, type FaceEngine, hasNativeDetector } from "@
 
 export type { FaceBox, FaceEngine }
 
-export function useFaceDetection(videoRef: React.RefObject<HTMLVideoElement | null>) {
+/**
+ * Face detection hook.
+ *
+ * @param videoRef  Ref to the <video> element (must be mounted in DOM).
+ * @param enabled   Only starts detection when `true`. Pass `cameraReady`
+ *                  so the tracker starts only after the video stream is
+ *                  attached and the element has rendered.
+ */
+export function useFaceDetection(
+  videoRef: React.RefObject<HTMLVideoElement | null>,
+  enabled: boolean = true,
+) {
   const [face, setFace] = useState<FaceBox | null>(null)
   const [isDetected, setIsDetected] = useState(false)
   const [engine, setEngine] = useState<FaceEngine>("none")
   const trackerRef = useRef<FaceTracker | null>(null)
-  const isActiveRef = useRef(false)
 
   const onFace = useCallback((f: FaceBox | null, e: FaceEngine) => {
     setFace(f)
@@ -17,21 +27,44 @@ export function useFaceDetection(videoRef: React.RefObject<HTMLVideoElement | nu
     setIsDetected(f !== null)
   }, [])
 
+  // Create / destroy the tracker when `enabled` or the video ref changes
   useEffect(() => {
     const video = videoRef.current
-    if (!video) return
+    if (!video || !enabled) {
+      // Clean up if tracker exists but shouldn't
+      if (trackerRef.current) {
+        trackerRef.current.stop()
+        trackerRef.current = null
+      }
+      return
+    }
 
-    isActiveRef.current = true
-    const tracker = new FaceTracker(video, onFace)
-    trackerRef.current = tracker
-    tracker.start()
+    // Wait for the video to have actual data before starting detection
+    const tryStart = () => {
+      if (video.readyState >= 2 && video.videoWidth > 0) {
+        const tracker = new FaceTracker(video, onFace)
+        trackerRef.current = tracker
+        tracker.start()
+      }
+    }
+
+    // If video is already ready, start immediately
+    tryStart()
+
+    // Otherwise wait for loadedmetadata or canplay
+    const onReady = () => tryStart()
+    video.addEventListener("loadedmetadata", onReady)
+    video.addEventListener("canplay", onReady)
 
     return () => {
-      isActiveRef.current = false
-      tracker.stop()
-      trackerRef.current = null
+      video.removeEventListener("loadedmetadata", onReady)
+      video.removeEventListener("canplay", onReady)
+      if (trackerRef.current) {
+        trackerRef.current.stop()
+        trackerRef.current = null
+      }
     }
-  }, [videoRef, onFace])
+  }, [videoRef, enabled, onFace])
 
   return { face, isDetected, engine, isNative: hasNativeDetector() }
 }

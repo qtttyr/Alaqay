@@ -247,21 +247,13 @@
   isolation: isolate;
 }
 
-.mirror-video-crop {
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-  z-index: 0;
-}
-
 .brush-mirror-stage video {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  will-change: transform;
-  /* scaleX(-1) is applied dynamically via inline style */
+  transform: scaleX(-1);
 }
 
 .brush-mirror-stage::after {
@@ -527,17 +519,6 @@
 }
 
 /* ── Face Tracking ────────────────────────────────────────────────── */
-
-@keyframes sparkle-fly {
-  0% {
-    opacity: 1;
-    transform: translate(var(--sx), var(--sy)) scale(1);
-  }
-  100% {
-    opacity: 0;
-    transform: translate(var(--sx), var(--sy)) scale(0);
-  }
-}
 
 .face-tracking-badge {
   position: absolute;

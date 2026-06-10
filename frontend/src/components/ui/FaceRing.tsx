@@ -18,7 +18,7 @@ interface FaceRingProps {
  */
 export function FaceRing({ face, isDetected, trackingAlpha, containerRef }: FaceRingProps) {
   const [style, setStyle] = useState<CSSProperties>({ opacity: 0 })
-  const [sparkles, setSparkles] = useState<Array<{ id: number; x: number; y: number }>>([])
+  const [sparkles, setSparkles] = useState<Array<{ id: number; sx: string; sy: string }>>([])
   const sparkleId = useRef(0)
   const prevDetected = useRef(false)
 
@@ -34,7 +34,6 @@ export function FaceRing({ face, isDetected, trackingAlpha, containerRef }: Face
     const cw = rect.width
     const ch = rect.height
 
-    // Map normalised face coordinates to container pixel space
     const cx = face.x * cw
     const cy = face.y * ch
     const size = Math.max(face.width * cw, face.height * ch) * 1.6
@@ -46,7 +45,6 @@ export function FaceRing({ face, isDetected, trackingAlpha, containerRef }: Face
       width: size,
       height: size,
       opacity: trackingAlpha,
-      transform: `translate(0, 0)`,
       pointerEvents: "none",
       zIndex: 5,
       transition: "opacity 0.15s ease",
@@ -56,21 +54,19 @@ export function FaceRing({ face, isDetected, trackingAlpha, containerRef }: Face
   // ── Sparkle burst on first detection ────────────────────────────
   useEffect(() => {
     if (isDetected && !prevDetected.current) {
-      const newSparkles: Array<{ id: number; x: number; y: number }> = []
+      const newSparkles: Array<{ id: number; sx: string; sy: string }> = []
       for (let i = 0; i < 6; i++) {
         sparkleId.current += 1
-        const angle = (Math.PI * 2 * i) / 6 + Math.random() * 0.4
-        const dist = 40 + Math.random() * 50
+        const angle = (Math.PI * 2 * i) / 6 + Math.random() * 0.5
+        const dist = 30 + Math.random() * 60
         newSparkles.push({
           id: sparkleId.current,
-          x: Math.cos(angle) * dist,
-          y: Math.sin(angle) * dist - 20,
+          sx: `${Math.cos(angle) * dist}px`,
+          sy: `${Math.sin(angle) * dist - 20}px`,
         })
       }
       setSparkles(newSparkles)
-
-      // Clean sparkles after animation
-      const timer = setTimeout(() => setSparkles([]), 800)
+      const timer = setTimeout(() => setSparkles([]), 900)
       prevDetected.current = true
       return () => clearTimeout(timer)
     }
@@ -89,9 +85,12 @@ export function FaceRing({ face, isDetected, trackingAlpha, containerRef }: Face
         style={{
           ...style,
           borderRadius: "50%",
-          border: `2.5px solid oklch(0.82 0.22 128 / ${0.25 + ringOpacity * 0.5})`,
-          boxShadow: `inset 0 0 40px oklch(0.82 0.22 128 / ${0.04 + ringOpacity * 0.1}), 0 0 30px oklch(0.82 0.22 128 / ${0.06 * ringOpacity})`,
-          background: `radial-gradient(circle, oklch(0.82 0.22 128 / ${0.03 * ringOpacity}), transparent 70%)`,
+          border: `2.5px solid oklch(0.82 0.22 128 / ${0.2 + ringOpacity * 0.55})`,
+          boxShadow: `
+            inset 0 0 40px oklch(0.82 0.22 128 / ${0.03 + ringOpacity * 0.08}),
+            0 0 30px oklch(0.82 0.22 128 / ${0.05 * ringOpacity})
+          `,
+          background: `radial-gradient(circle, oklch(0.82 0.22 128 / ${0.02 * ringOpacity}), transparent 65%)`,
         }}
       />
 
@@ -108,41 +107,40 @@ export function FaceRing({ face, isDetected, trackingAlpha, containerRef }: Face
         ✨ Tracking
       </div>
 
-      {/* Sparkles */}
+      {/* Sparkles — each one animated via inline style + transition */}
       {sparkles.map((s) => (
-        <SparkleDot key={s.id} x={s.x} y={s.y} style={style} />
+        <SparkDot key={s.id} sx={s.sx} sy={s.sy} baseStyle={style} />
       ))}
     </>
   )
 }
 
-function SparkleDot({
-  x,
-  y,
-  style,
-}: {
-  x: number
-  y: number
-  style: CSSProperties
-}) {
+function SparkDot({ sx, sy, baseStyle }: { sx: string; sy: string; baseStyle: CSSProperties }) {
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    // Trigger enter animation on next frame
+    const id = requestAnimationFrame(() => setMounted(true))
+    return () => cancelAnimationFrame(id)
+  }, [])
+
   return (
     <div
       aria-hidden
       style={{
         position: "absolute",
-        left: style.left as string | number,
-        top: style.top as string | number,
-        width: 6,
-        height: 6,
+        left: baseStyle.left,
+        top: baseStyle.top,
+        width: 5,
+        height: 5,
         borderRadius: "50%",
         background: "oklch(0.82 0.22 128)",
-        boxShadow: "0 0 8px oklch(0.82 0.22 128 / 0.6)",
+        boxShadow: "0 0 10px oklch(0.82 0.22 128 / 0.7)",
         pointerEvents: "none",
         zIndex: 6,
-        // Fly outward from the ring centre
-        transform: `translate(${x}px, ${y}px) scale(0)`,
-        animation: "sparkle-fly 0.7s ease-out forwards",
-        opacity: 0,
+        transform: mounted ? `translate(${sx}, ${sy}) scale(0)` : "translate(0, 0) scale(1.5)",
+        opacity: mounted ? 0 : 1,
+        transition: "transform 0.7s ease-out, opacity 0.7s ease-out",
       }}
     />
   )

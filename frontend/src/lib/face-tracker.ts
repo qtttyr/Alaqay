@@ -2,10 +2,8 @@
  * Face detection engine.
  *
  * Uses the native FaceDetector API (Chromium) when available, falling back
- * to a lightweight Canvas-based tracker that combines motion detection,
- * brightness centroid, and skin-colour cues.  The CV fallback is designed
- * specifically for the mirror / bathroom scenario (person standing in front
- * of a fairly static background).
+ * to a lightweight Canvas-based tracker that combines motion detection
+ * and brightness cues.
  *
  * All returned coordinates are normalised [0…1] relative to the video
  * dimensions so the consumer never needs to know the raw resolution.
@@ -28,6 +26,8 @@ interface DetectedFace {
   landmarks?: Array<{ type: string; locations: DOMPointReadOnly[] }>
 }
 
+/* ── Exports ────────────────────────────────────────────────────── */
+
 export interface FaceBox {
   /** Normalised centre-x of the detected face (0 = left, 1 = right). */
   x: number
@@ -40,155 +40,169 @@ export interface FaceBox {
 }
 
 export type FaceEngine = "native" | "canvas" | "none"
+export type FaceCallback = (face: FaceBox | null, engine: FaceEngine) => void
 
-const SCAN_INTERVAL_MS = 350
-const CANVAS_W = 80
-const CANVAS_H = 60
+/* ── Constants ──────────────────────────────────────────────────── */
 
-/* ── Skin-colour range in YCbCr (loose, works for most skin tones) ──── */
-const SKIN_Y_MIN = 60
-const SKIN_CB = [85, 130] as const
-const SKIN_CR = [133, 175] as const
-
-/* ── State ──────────────────────────────────────────────────────────── */
-
-interface TrackerState {
-  prevFrame: ImageData | null
-  smoothX: number
-  smoothY: number
-}
-
-function createState(): TrackerState {
-  return { prevFrame: null, smoothX: 0.5, smoothY: 0.5 }
-}
-
-/* ── Public helpers ─────────────────────────────────────────────────── */
+const SCAN_INTERVAL_MS = 400
+const CANVAS_W = 64
+const CANVAS_H = 48
 
 /** Check whether the browser supports the native FaceDetector API. */
 export function hasNativeDetector(): boolean {
-  return typeof window !== "undefined" && "FaceDetector" in window
-}
-
-/* ── Canvas-based fallback ──────────────────────────────────────────── */
-
-function canvasDetect(
-  video: HTMLVideoElement,
-  ctx: CanvasRenderingContext2D,
-  state: TrackerState,
-): FaceBox | null {
-  const vw = video.videoWidth
-  const vh = video.videoHeight
-  if (!vw || !vh) return null
-
-  // Draw a downscaled frame to the offscreen canvas
-  ctx.drawImage(video, 0, 0, CANVAS_W, CANVAS_H)
-  const imageData = ctx.getImageData(0, 0, CANVAS_W, CANVAS_H)
-  const pixels = imageData.data
-
-  const cx = CANVAS_W / 2
-  const cy = CANVAS_H / 2
-
-  // 1) Build a "confidence" map combining skin-colour, brightness & motion
-  const confidences = new Float32Array(CANVAS_W * CANVAS_H)
-  let totalWeight = 0
-  let weightedX = 0
-  let weightedY = 0
-  let maxConf = 0
-  let maxIdx = 0
-
-  for (let i = 0; i < CANVAS_W * CANVAS_H; i++) {
-    const idx = i << 2
-    const r = pixels[idx]
-    const g = pixels[idx + 1]
-    const b = pixels[idx + 2]
-
-    // Convert RGB → YCbCr
-    const y = 0.299 * r + 0.587 * g + 0.114 * b
-    const cb = 128 - 0.168736 * r - 0.331264 * g + 0.5 * b
-    const cr = 128 + 0.5 * r - 0.418688 * g - 0.081312 * b
-
-    // Skin-colour score (0‑1)
-    const inSkinRange =
-      y > SKIN_Y_MIN &&
-      cb >= SKIN_CB[0] && cb <= SKIN_CB[1] &&
-      cr >= SKIN_CR[0] && cr <= SKIN_CR[1]
-    const skinScore = inSkinRange ? 1 : Math.max(0, 1 - Math.abs(cr - 154) / 60)
-
-    // Brightness score – face is typically the brightest object in a mirror
-    const brightScore = Math.min(1, y / 200)
-
-    // Motion score – frame differencing
-    let motionScore = 0.5
-    if (state.prevFrame) {
-      const prevIdx = idx
-      const pd = state.prevFrame.data
-      const diff =
-        Math.abs(pixels[prevIdx] - pd[prevIdx]) +
-        Math.abs(pixels[prevIdx + 1] - pd[prevIdx + 1]) +
-        Math.abs(pixels[prevIdx + 2] - pd[prevIdx + 2])
-      motionScore = Math.min(1, diff / (3 * 60))
-    }
-
-    // Combined confidence
-    const conf = skinScore * 0.5 + brightScore * 0.25 + motionScore * 0.25
-    confidences[i] = conf
-
-    if (conf > maxConf) {
-      maxConf = conf
-      maxIdx = i
-    }
-
-    // Weighted centroid (penalise areas far from centre)
-    const px = i % CANVAS_W
-    const py = (i / CANVAS_W) | 0
-    const distNorm = Math.sqrt(
-      ((px - cx) / cx) ** 2 + ((py - cy) / cy) ** 2,
-    )
-    const spatialWeight = Math.max(0.3, 1 - distNorm * 0.25)
-    const w = conf * spatialWeight
-
-    weightedX += px * w
-    weightedY += py * w
-    totalWeight += w
-  }
-
-  state.prevFrame = imageData
-
-  // Fallback to peak if centroid is too weak
-  const strength = totalWeight / (CANVAS_W * CANVAS_H)
-  if (strength < 0.012) {
-    // Not enough signal – return null (face probably not visible)
-    return null
-  }
-
-  let faceCx: number
-  let faceCy: number
-
-  if (totalWeight > 0) {
-    faceCx = weightedX / totalWeight
-    faceCy = weightedY / totalWeight
-  } else {
-    faceCx = maxIdx % CANVAS_W
-    faceCy = (maxIdx / CANVAS_W) | 0
-  }
-
-  // Smooth with previous position (exponential moving average)
-  const alpha = 0.35
-  state.smoothX = state.smoothX + alpha * (faceCx / CANVAS_W - state.smoothX)
-  state.smoothY = state.smoothY + alpha * (faceCy / CANVAS_H - state.smoothY)
-
-  // Estimate bounding-box size (heuristic: face ≈ 15‑30 % of frame)
-  const rawSize = maxConf > 0.5 ? 0.28 : 0.22
-
-  return {
-    x: state.smoothX,
-    y: state.smoothY,
-    width: rawSize,
-    height: rawSize * (CANVAS_H / CANVAS_W),
+  try {
+    return typeof window !== "undefined" && "FaceDetector" in window
+  } catch {
+    return false
   }
 }
 
-/* ── Native FaceDetector API wrapper ────────────────────────────────── */
+/* ── Canvas-based fallback ──────────────────────────────────────── */
+
+/**
+ * Simple motion + brightness centroid tracker.
+ *
+ * Every frame (at SCAN_INTERVAL_MS):
+ * 1. Downscale video to CANVAS_W × CANVAS_H
+ * 2. Convert to greyscale
+ * 3. Compare with previous frame → motion map
+ * 4. Find the centroid of the motion + bright regions
+ * 5. Smooth with EMA and return a box
+ *
+ * This is deliberately simple — it just needs a "where is the person"
+ * signal, not exact face landmarks.  It works in ANY browser.
+ */
+class CanvasFaceDetector {
+  private canvas: HTMLCanvasElement
+  private ctx: CanvasRenderingContext2D
+  private prevFrame: Uint8Array | null = null
+  private smoothX = 0.5
+  private smoothY = 0.5
+
+  constructor() {
+    this.canvas = document.createElement("canvas")
+    this.canvas.width = CANVAS_W
+    this.canvas.height = CANVAS_H
+    const ctx = this.canvas.getContext("2d", { willReadFrequently: true })
+    if (!ctx) throw new Error("Cannot create 2D context")
+    this.ctx = ctx
+  }
+
+  detect(video: HTMLVideoElement): FaceBox | null {
+    const vw = video.videoWidth
+    const vh = video.videoHeight
+    if (!vw || !vh) return null
+
+    // Draw downscaled frame
+    this.ctx.drawImage(video, 0, 0, CANVAS_W, CANVAS_H)
+    const imageData = this.ctx.getImageData(0, 0, CANVAS_W, CANVAS_H)
+    const pixels = imageData.data
+
+    // Convert to greyscale + find brightness stats
+    const grey = new Uint8Array(CANVAS_W * CANVAS_H)
+    let sumBright = 0
+    let sumWeight = 0
+    let weightedX = 0
+    let weightedY = 0
+
+    for (let i = 0; i < CANVAS_W * CANVAS_H; i++) {
+      const idx = i << 2
+      // Luminance: 0.299R + 0.587G + 0.114B
+      grey[i] = (pixels[idx] * 77 + pixels[idx + 1] * 150 + pixels[idx + 2] * 29) >> 8
+    }
+
+    // ── Motion score (frame differencing) ────────────────────────
+    let motionScoreTotal = 0
+    if (this.prevFrame) {
+      for (let i = 0; i < CANVAS_W * CANVAS_H; i++) {
+        const diff = Math.abs(grey[i] - this.prevFrame[i])
+        // Anything above a tiny threshold counts as "motion"
+        if (diff > 8) motionScoreTotal++
+      }
+    }
+    this.prevFrame = grey
+
+    // ── If there's enough motion, weight by brightness ──────────
+    //     (the face is likely the brightest moving object)
+    const motionRatio = motionScoreTotal / (CANVAS_W * CANVAS_H)
+
+    // Thresholds — deliberately low to catch more
+    if (motionRatio > 0.02) {
+      // Motion detected — weight by brightness * motion
+      for (let i = 0; i < CANVAS_W * CANVAS_H; i++) {
+        // Brightness score: higher = brighter
+        const bright = grey[i] / 255
+        // Motion indicator: 1 if pixel changed, 0.3 if not
+        let motion = 0.3
+        if (this.prevFrame) {
+          const diff = Math.abs(grey[i] - this.prevFrame[i])
+          motion = Math.min(1, diff / 30)
+        }
+        const w = bright * motion
+
+        sumBright += grey[i]
+        sumWeight += w
+        weightedX += (i % CANVAS_W) * w
+        weightedY += ((i / CANVAS_W) | 0) * w
+      }
+
+      // Gentle pull toward center to avoid edge-seeking
+      const cx = CANVAS_W / 2
+      const cy = CANVAS_H / 2
+      const centerPull = 0.15
+      if (sumWeight > 0) {
+        const rawX = weightedX / sumWeight
+        const rawY = weightedY / sumWeight
+        weightedX = rawX + (cx - rawX) * centerPull
+        weightedY = rawY + (cy - rawY) * centerPull
+      }
+    } else {
+      // No significant motion — fall back to brightness centroid
+      // (person is still, just track the brightest area)
+      let brightTotal = 0
+      for (let i = 0; i < CANVAS_W * CANVAS_H; i++) {
+        const bright = grey[i]
+        sumBright += bright
+        if (bright > 60) {
+          weightedX += (i % CANVAS_W) * bright
+          weightedY += ((i / CANVAS_W) | 0) * bright
+          brightTotal += bright
+        }
+      }
+
+      if (brightTotal > 0) {
+        weightedX /= brightTotal
+        weightedY /= brightTotal
+      } else {
+        // Nothing found — drift to centre
+        weightedX = CANVAS_W / 2
+        weightedY = CANVAS_H / 2
+      }
+    }
+
+    // ── Normalise and smooth ─────────────────────────────────────
+    const normX = weightedX / CANVAS_W
+    const normY = weightedY / CANVAS_H
+
+    // EMA smoothing (lower alpha = smoother)
+    const alpha = 0.3
+    this.smoothX = this.smoothX + alpha * (normX - this.smoothX)
+    this.smoothY = this.smoothY + alpha * (normY - this.smoothY)
+
+    // Heuristic box size: face is roughly 15-30% of the frame
+    const brightnessRatio = sumBright / (CANVAS_W * CANVAS_H * 255)
+    const size = 0.18 + brightnessRatio * 0.2
+
+    return {
+      x: Math.max(0.05, Math.min(0.95, this.smoothX)),
+      y: Math.max(0.05, Math.min(0.95, this.smoothY)),
+      width: size,
+      height: size * (CANVAS_H / CANVAS_W),
+    }
+  }
+}
+
+/* ── Native FaceDetector API wrapper ────────────────────────────── */
 
 async function nativeDetect(
   video: HTMLVideoElement,
@@ -196,9 +210,9 @@ async function nativeDetect(
 ): Promise<FaceBox | null> {
   try {
     const faces = await detector.detect(video)
-    if (!faces.length) return null
+    if (!faces || faces.length === 0) return null
 
-    // Use the largest face (closest to camera)
+    // Use the largest face
     let best = faces[0]
     let bestArea = best.boundingBox.width * best.boundingBox.height
     for (let i = 1; i < faces.length; i++) {
@@ -214,8 +228,7 @@ async function nativeDetect(
     const vh = video.videoHeight
     if (!vw || !vh) return null
 
-    // Normalise to 0‑1
-    const padding = 0.05 // slight inset so framing isn't too tight
+    const padding = 0.06
     const x = Math.max(0, bb.x / vw)
     const y = Math.max(0, bb.y / vh)
     const w = Math.min(1 - x, bb.width / vw)
@@ -232,25 +245,21 @@ async function nativeDetect(
   }
 }
 
-/* ── Tracker class ──────────────────────────────────────────────────── */
-
-export type FaceCallback = (face: FaceBox | null, engine: FaceEngine) => void
+/* ── Tracker class ──────────────────────────────────────────────── */
 
 export class FaceTracker {
   private video: HTMLVideoElement
-  private canvas: HTMLCanvasElement | null = null
-  private ctx: CanvasRenderingContext2D | null = null
-  private state = createState()
   private detector: FaceDetector | null = null
+  private canvasDetector: CanvasFaceDetector
   private engine: FaceEngine = "none"
   private timerId: ReturnType<typeof setInterval> | null = null
   private callback: FaceCallback
-
   private useNative: boolean
 
   constructor(video: HTMLVideoElement, callback: FaceCallback) {
     this.video = video
     this.callback = callback
+    this.canvasDetector = new CanvasFaceDetector()
     this.useNative = hasNativeDetector()
   }
 
@@ -263,17 +272,12 @@ export class FaceTracker {
         })
         this.engine = "native"
       } catch {
-        // Native API available but construction failed – fall through
         this.useNative = false
       }
     }
 
     if (!this.useNative) {
       this.engine = "canvas"
-      this.canvas = document.createElement("canvas")
-      this.canvas.width = CANVAS_W
-      this.canvas.height = CANVAS_H
-      this.ctx = this.canvas.getContext("2d", { willReadFrequently: true })
     }
 
     this.timerId = setInterval(() => this.tick(), SCAN_INTERVAL_MS)
@@ -285,27 +289,46 @@ export class FaceTracker {
       this.timerId = null
     }
     this.detector = null
-    this.canvas = null
-    this.ctx = null
   }
 
   private tick() {
-    if (this.video.readyState < 2) return // video not ready yet
-
-    let face: FaceBox | null = null
+    if (this.video.readyState < 2) {
+      return
+    }
 
     if (this.useNative && this.detector) {
       nativeDetect(this.video, this.detector).then((result) => {
-        this.callback(result ?? null, this.engine)
+        const face = result ?? this.fallback()
+        this.callback(face, this.engine)
+        this.exposeDebug(face)
       })
-      return // async – result handled in promise
+      return
     }
 
-    // Canvas fallback (synchronous)
-    if (this.canvas && this.ctx) {
-      face = canvasDetect(this.video, this.ctx, this.state)
+    // Canvas fallback
+    try {
+      const face = this.canvasDetector.detect(this.video)
+      this.callback(face, this.engine)
+      this.exposeDebug(face)
+    } catch {
+      this.callback(null, this.engine)
     }
+  }
 
-    this.callback(face, this.engine)
+  /**
+   * If native detection fails to find a face, fall back to canvas
+   * so that the user still gets smooth framing.
+   */
+  private fallback(): FaceBox | null {
+    return this.canvasDetector.detect(this.video)
+  }
+
+  /** Expose debug info on `window.__alaqay` for mobile console inspection. */
+  private exposeDebug(face: FaceBox | null) {
+    if (typeof window !== "undefined") {
+      const d = (window as any).__alaqay ?? {}
+      d.faceTracker = { engine: this.engine, face, tick: Date.now() }
+      ;(window as any).__alaqay = d
+    }
   }
 }

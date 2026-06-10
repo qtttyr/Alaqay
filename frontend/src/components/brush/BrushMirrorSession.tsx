@@ -1,11 +1,10 @@
 import { HugeiconsIcon } from "@hugeicons/react"
 import { Camera01Icon, CameraOff01Icon, CheckmarkCircle02Icon, PauseCircleIcon, PlayCircleIcon } from "@hugeicons/core-free-icons"
-import { useEffect, useRef, useState, type CSSProperties } from "react"
+import { useEffect, useRef, type CSSProperties } from "react"
 
 import { Button } from "@/components/ui/button"
 import { FaceRing } from "@/components/ui/FaceRing"
 import { useFaceDetection } from "@/hooks/useFaceDetection"
-import { useFaceFramer } from "@/hooks/useFaceFramer"
 import { useMirrorCamera } from "@/hooks/useMirrorCamera"
 
 function TeethGuide({ activeZoneId }: { activeZoneId: string }) {
@@ -135,38 +134,8 @@ export function BrushMirrorSession({
   const sessionProgress = Math.round(((totalSeconds - remainingSeconds) / totalSeconds) * 100)
   const cameraReady = camera.status === "ready"
 
-  // ── Face detection (works only when video is playing) ────────────────
-  const { face, isDetected } = useFaceDetection(videoRef)
-
-  // ── Container dimensions for auto-framing ────────────────────────────
-  const [stageSize, setStageSize] = useState({ width: 0, height: 0 })
-
-  useEffect(() => {
-    const el = stageRef.current
-    if (!el) return
-
-    const ro = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        const { width, height } = entry.contentRect
-        if (width > 0 && height > 0) {
-          setStageSize({ width, height })
-        }
-      }
-    })
-
-    ro.observe(el)
-
-    // Initial size
-    const rect = el.getBoundingClientRect()
-    if (rect.width > 0 && rect.height > 0) {
-      setStageSize({ width: rect.width, height: rect.height })
-    }
-
-    return () => ro.disconnect()
-  }, [])
-
-  // ── Smooth auto-framing transform ────────────────────────────────────
-  const frameState = useFaceFramer(face, isDetected, stageSize.width, stageSize.height)
+  // ── Face detection (starts only when camera stream is active) ────────
+  const { face, isDetected } = useFaceDetection(videoRef, cameraReady)
 
   // ── Stream video to element ──────────────────────────────────────────
   useEffect(() => {
@@ -208,14 +177,13 @@ export function BrushMirrorSession({
         data-tracking={isDetected ? "face" : "idle"}
       >
         {cameraReady && (
-          <div className="mirror-video-crop">
+          <>
             <video
               ref={videoRef}
               aria-label="Mirror camera"
               autoPlay
               muted
               playsInline
-              style={{ transform: frameState.transform } as CSSProperties}
               onLoadedMetadata={() => {
                 videoRef.current?.play().catch(e => console.warn("Metadata play failed:", e))
               }}
@@ -224,10 +192,10 @@ export function BrushMirrorSession({
             <FaceRing
               face={face}
               isDetected={isDetected}
-              trackingAlpha={frameState.trackingAlpha}
+              trackingAlpha={isDetected ? 1 : 0}
               containerRef={stageRef}
             />
-          </div>
+          </>
         )}
 
         {!cameraReady && (
